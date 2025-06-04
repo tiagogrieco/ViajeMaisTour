@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // <<== IMPORTAR useNavigate
+import { useNavigate } from 'react-router-dom';
 import './PlanejamentoViagens.css';
-import { FaPlus, FaFilter, FaEdit, FaTrash, FaInfoCircle, FaMoneyBillWave, FaFileAlt } from 'react-icons/fa';
+import { FaPlus, FaFilter, FaEdit, FaTrash, FaInfoCircle, FaMoneyBillWave, FaFileAlt, FaUsers } from 'react-icons/fa'; // Importar FaUsers
 
 function PlanejamentoViagens() {
   const [viagens, setViagens] = useState([]);
@@ -11,7 +11,7 @@ function PlanejamentoViagens() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatusPagamento, setFilterStatusPagamento] = useState('');
   const [filterStatusDocumento, setFilterStatusDocumento] = useState('');
-  const navigate = useNavigate(); // <<== INICIALIZAR useNavigate
+  const navigate = useNavigate();
 
   const fetchData = async () => {
     try {
@@ -68,10 +68,13 @@ function PlanejamentoViagens() {
   };
 
   const filteredViagens = viagens.filter(viagem => {
-    const nomeCliente = getClienteNome(viagem.cliente_id);
+    const nomeClientePrincipal = getClienteNome(viagem.cliente_id);
+    // Combina o nome do cliente principal com os nomes dos participantes para a busca
+    const todosNomes = [nomeClientePrincipal, ...(viagem.participantes_detalhes || []).map(p => p.nome)].join(' ').toLowerCase();
+
     const matchesSearch =
       (viagem.destino?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (nomeCliente?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+      todosNomes.includes(searchTerm.toLowerCase()); // NOVO: Busca por nome de participante ou cliente principal
 
     const matchesPagamento = filterStatusPagamento === '' || viagem.pagamento_status === filterStatusPagamento;
     const matchesDocumento = filterStatusDocumento === '' || viagem.documento_status === filterStatusDocumento;
@@ -91,10 +94,12 @@ function PlanejamentoViagens() {
     // Idealmente, isso navegaria para um formulário de nova viagem
     // Por enquanto, vamos manter um alerta, mas o correto seria navigate('/viagens/nova');
     alert('Funcionalidade de Adicionar Nova Viagem será implementada em uma tela dedicada!');
+    // Para simplificar, vou manter o alerta, mas para um fluxo real, seria:
+    // navigate('/viagens/nova'); // Você pode criar um componente `NovaViagem` para isso
   };
   
   const handleEditViagem = (viagemId) => {
-    navigate(`/viagens/editar/${viagemId}`); // <<== NAVEGAR PARA A ROTA DE EDIÇÃO
+    navigate(`/viagens/editar/${viagemId}`);
   };
 
 
@@ -114,7 +119,7 @@ function PlanejamentoViagens() {
           <FaFilter className="search-icon" />
           <input
             type="text"
-            placeholder="Buscar por destino ou cliente..."
+            placeholder="Buscar por destino, cliente principal ou participante..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
@@ -160,7 +165,15 @@ function PlanejamentoViagens() {
                 <span className="viagem-id">ID #{viagem.id}</span>
               </div>
               <div className="card-body">
-                <p><strong>Cliente:</strong> {getClienteNome(viagem.cliente_id)}</p>
+                <p><strong>Cliente Principal:</strong> {viagem.nome_cliente}</p> {/* Exibe o nome do cliente principal */}
+                {viagem.participantes_detalhes && viagem.participantes_detalhes.length > 1 && (
+                    <p className="participantes-list">
+                        <FaUsers style={{ marginRight: '5px' }} />
+                        <strong>Participantes:</strong> {viagem.participantes_detalhes
+                            .filter(p => p.id !== viagem.cliente_id) // Exclui o cliente principal da lista de "outros"
+                            .map(p => p.nome).join(', ')}
+                    </p>
+                )}
                 <p><strong>Check-in:</strong> {viagem.checkin ? new Date(viagem.checkin).toLocaleDateString('pt-BR') : '-'}</p>
                 <p><strong>Check-out:</strong> {viagem.checkout ? new Date(viagem.checkout).toLocaleDateString('pt-BR') : '-'}</p>
                 <p><strong>Valor:</strong> R$ {parseFloat(viagem.valor?.replace(',', '.') || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
@@ -180,7 +193,7 @@ function PlanejamentoViagens() {
                 <button onClick={() => navigate(`/clientes/${viagem.cliente_id}`)} className="btn-action btn-detalhes" title="Ver detalhes do cliente">
                   <FaInfoCircle /> Cliente
                 </button>
-                <button onClick={() => handleEditViagem(viagem.id)} className="btn-action btn-editar"> {/* <<== CHAMAR handleEditViagem */}
+                <button onClick={() => handleEditViagem(viagem.id)} className="btn-action btn-editar">
                   <FaEdit /> Editar Viagem
                 </button>
                 <button onClick={() => handleDeleteViagem(viagem.id, viagem.destino)} className="btn-action btn-excluir">

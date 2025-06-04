@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './ClienteDetalhes.css';
-import { FaEdit, FaArrowLeft, FaTrash, FaFilePdf, FaEye, FaArrowCircleRight } from 'react-icons/fa'; // FaTrash já está aqui
+import { FaEdit, FaArrowLeft, FaTrash, FaFilePdf, FaEye, FaArrowCircleRight, FaUsers } from 'react-icons/fa'; // FaUsers importado
 
 export default function ClienteDetalhes() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [cliente, setCliente] = useState(null);
+  const [viagens, setViagens] = useState([]); // NOVO: Estado para as viagens do cliente
   const [orcamentos, setOrcamentos] = useState([]);
   const [loadingCliente, setLoadingCliente] = useState(true);
   const [loadingOrcamentos, setLoadingOrcamentos] = useState(true);
+  const [loadingViagens, setLoadingViagens] = useState(true); // NOVO: Estado de loading para viagens
   const [error, setError] = useState(null);
   const [orcamentoDetalhado, setOrcamentoDetalhado] = useState(null);
 
@@ -48,8 +50,28 @@ export default function ClienteDetalhes() {
       }
     };
 
+    // NOVO: Função para buscar viagens do cliente
+    const fetchViagensData = async () => {
+        setLoadingViagens(true);
+        try {
+            const response = await fetch(`http://localhost:3000/viagens?cliente_id=${parseInt(id)}&participante_id=${parseInt(id)}`);
+            if (!response.ok) {
+                throw new Error('Falha ao carregar histórico de viagens.');
+            }
+            const data = await response.json();
+            setViagens(data);
+        } catch (err) {
+            console.error('Erro ao buscar viagens:', err);
+            setError(prevError => prevError ? `${prevError}\n${err.message}` : err.message);
+        } finally {
+            setLoadingViagens(false);
+        }
+    };
+
+
     fetchClienteData();
     fetchOrcamentosData();
+    fetchViagensData(); // NOVO: Chamar a função para buscar viagens
   }, [id]);
 
   const handleDeleteCliente = async () => {
@@ -100,8 +122,8 @@ export default function ClienteDetalhes() {
           alert(`Orçamento para "${destinoOrcamento}" (ID: ${orcamentoId}) excluído com sucesso!`);
         } else {
           const errorData = await res.json().catch(() => null);
-          const mensagemErro = errorData && errorData.erro 
-                             ? errorData.erro 
+          const mensagemErro = errorData && errorData.erro
+                             ? errorData.erro
                              : `Status: ${res.status}`;
           alert(`Erro ao excluir o orçamento "${destinoOrcamento}": ${mensagemErro}`);
         }
@@ -146,6 +168,53 @@ export default function ClienteDetalhes() {
         {cliente.observacoes && (<div className="info-item full-width"><strong>Observações:</strong><span>{cliente.observacoes}</span></div>)}
       </div>
 
+      <section className="historico-viagens-section"> {/* NOVO: Seção para histórico de viagens */}
+        <h3>Histórico de Viagens</h3>
+        {loadingViagens ? (
+          <p className="loading-message">Carregando viagens...</p>
+        ) : viagens.length > 0 ? (
+          <table className="historico-viagens-table">
+            <thead>
+              <tr>
+                <th>Destino</th>
+                <th>Check-in</th>
+                <th>Check-out</th>
+                <th>Valor</th>
+                <th>Status Pag.</th>
+                <th>Status Docs.</th>
+                <th>Participantes</th> {/* NOVO: Coluna Participantes */}
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {viagens.map(viagem => (
+                <tr key={viagem.id}>
+                  <td>{viagem.destino}</td>
+                  <td>{viagem.checkin ? new Date(viagem.checkin).toLocaleDateString('pt-BR') : '-'}</td>
+                  <td>{viagem.checkout ? new Date(viagem.checkout).toLocaleDateString('pt-BR') : '-'}</td>
+                  <td>R$ {parseFloat(viagem.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  <td>{viagem.pagamento_status}</td>
+                  <td>{viagem.documento_status}</td>
+                  <td>
+                    {viagem.participantes_detalhes && viagem.participantes_detalhes.length > 0 ? (
+                        <FaUsers title={viagem.participantes_detalhes.map(p => p.nome).join(', ')} />
+                    ) : '-'}
+                  </td>
+                  <td className="actions-cell">
+                    <button onClick={() => navigate(`/viagens/editar/${viagem.id}`)} className="btn-action-table btn-view-details" title="Editar Viagem">
+                        <FaEdit />
+                    </button>
+                    {/* Pode adicionar mais ações aqui, como excluir viagem */}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="no-data-message">Nenhuma viagem registrada para este cliente.</p>
+        )}
+      </section>
+
       <section className="historico-orcamentos-section">
         <h3>Histórico de Orçamentos</h3>
         {loadingOrcamentos ? (
@@ -169,9 +238,9 @@ export default function ClienteDetalhes() {
                   <td className="text-right">R$ {parseFloat(orc.total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   <td>{orc.observacoes || '-'}</td>
                   <td className="actions-cell">
-                     <button 
-                        onClick={() => handleVerDetalhesOrcamento(orc)} 
-                        className="btn-action-table btn-view-details" 
+                     <button
+                        onClick={() => handleVerDetalhesOrcamento(orc)}
+                        className="btn-action-table btn-view-details"
                         title="Ver Detalhes do Orçamento">
                        <FaEye />
                      </button>
@@ -184,8 +253,8 @@ export default function ClienteDetalhes() {
                     {/* NOVO BOTÃO DE EXCLUIR */}
                     <button
                       onClick={() => handleExcluirOrcamento(orc.id, orc.destino)}
-                      className="btn-action-table btn-delete-orcamento" // Use a classe CSS apropriada
-                      style={{color: '#dc3545'}} // Estilo inline temporário para cor vermelha
+                      className="btn-action-table btn-delete-orcamento"
+                      style={{color: '#dc3545'}}
                       title="Excluir Orçamento">
                      <FaTrash />
                    </button>

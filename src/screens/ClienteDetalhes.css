@@ -136,20 +136,20 @@
 
 
 /* Estilos para Histórico de Orçamentos */
-.historico-orcamentos-section {
+.historico-orcamentos-section, .historico-viagens-section { /* NOVO: Aplicado a ambas as seções */
   margin-top: 3rem; /* Mais espaço acima */
   padding-top: 1.5rem;
   border-top: 1px solid #e0e5eb;
 }
 
-.historico-orcamentos-section h3 {
+.historico-orcamentos-section h3, .historico-viagens-section h3 { /* NOVO: Aplicado a ambas as seções */
   font-size: 1.5rem; /* Tamanho ajustado */
   color: #34495e; /* Cinza escuro azulado */
   margin-bottom: 1.25rem; /* Espaçamento abaixo */
   text-align: left;
 }
 
-.historico-orcamentos-table {
+.historico-orcamentos-table, .historico-viagens-table { /* NOVO: Aplicado a ambas as tabelas */
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem; /* Fonte da tabela */
@@ -159,14 +159,16 @@
 }
 
 .historico-orcamentos-table th,
-.historico-orcamentos-table td {
+.historico-orcamentos-table td,
+.historico-viagens-table th,
+.historico-viagens-table td { /* NOVO: Aplicado a ambas as tabelas */
   border-bottom: 1px solid #e9ecef; /* Apenas borda inferior */
   padding: 12px 15px; /* Padding ajustado */
   text-align: left;
   vertical-align: middle;
 }
 
-.historico-orcamentos-table th {
+.historico-orcamentos-table th, .historico-viagens-table th { /* NOVO: Aplicado a ambas as tabelas */
   background-color: #f0f3f6; /* Fundo do cabeçalho */
   color: #495057; /* Cor do texto do cabeçalho */
   font-weight: 600;
@@ -176,19 +178,19 @@
 }
 
 
-.historico-orcamentos-table tbody tr:nth-child(even) {
+.historico-orcamentos-table tbody tr:nth-child(even), .historico-viagens-table tbody tr:nth-child(even) { /* NOVO: Aplicado a ambas as tabelas */
   background-color: #fcfdff; /* Fundo alternado muito sutil */
 }
 
-.historico-orcamentos-table tbody tr:hover {
+.historico-orcamentos-table tbody tr:hover, .historico-viagens-table tbody tr:hover { /* NOVO: Aplicado a ambas as tabelas */
   background-color: #eef2f7; /* Hover mais suave */
 }
 
-.historico-orcamentos-table .text-right {
+.historico-orcamentos-table .text-right, .historico-viagens-table .text-right { /* NOVO: Aplicado a ambas as tabelas */
   text-align: right;
 }
 
-.historico-orcamentos-table .actions-cell {
+.historico-orcamentos-table .actions-cell, .historico-viagens-table .actions-cell { /* NOVO: Aplicado a ambas as tabelas */
   text-align: center; /* Centraliza os botões de ação */
   width: 80px; /* Largura fixa para célula de ações */
 }

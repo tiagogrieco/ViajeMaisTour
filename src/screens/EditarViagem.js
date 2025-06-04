@@ -7,6 +7,7 @@ function EditarViagem() {
   const { id: viagemId } = useParams(); // Renomear id para viagemId para clareza
   const navigate = useNavigate();
 
+  const [clientes, setClientes] = useState([]); // NOVO: Lista de todos os clientes
   const [formData, setFormData] = useState({
     cliente_id: '',
     destino: '',
@@ -16,9 +17,9 @@ function EditarViagem() {
     pagamento_status: 'pendente',
     documento_status: 'pendente',
     observacoes: '',
+    participantes_ids: [], // NOVO: Array para IDs dos participantes
   });
-  const [clientes, setClientes] = useState([]);
-  const [viagemOriginal, setViagemOriginal] = useState(null); // Para mostrar o nome do cliente e destino
+  const [viagemOriginal, setViagemOriginal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [mensagem, setMensagem] = useState('');
@@ -31,7 +32,7 @@ function EditarViagem() {
       try {
         const [viagemRes, clientesRes] = await Promise.all([
           fetch(`http://localhost:3000/viagens/${viagemId}`),
-          fetch('http://localhost:3000/clientes')
+          fetch('http://localhost:3000/clientes') // Buscar todos os clientes
         ]);
 
         if (!viagemRes.ok) {
@@ -43,11 +44,12 @@ function EditarViagem() {
           throw new Error('Falha ao carregar lista de clientes.');
         }
         const clientesData = await clientesRes.json();
-        setClientes(clientesData);
-        
-        setViagemOriginal({ // Guardar dados originais para exibição no título
+        setClientes(clientesData); // Armazena a lista de clientes
+
+        setViagemOriginal({
             destino: viagemData.destino,
-            nome_cliente: viagemData.nome_cliente 
+            nome_cliente: viagemData.nome_cliente,
+            participantes_detalhes: viagemData.participantes_detalhes || [],
         });
 
         // Formatar datas para o input type="date" (YYYY-MM-DD)
@@ -56,6 +58,10 @@ function EditarViagem() {
         // Formatar valor para exibição (ex: 1250.75)
         const valorFormatado = parseFloat(String(viagemData.valor || '0').replace(',', '.')).toFixed(2);
 
+        // Extrai os IDs dos participantes existentes
+        const existingParticipantsIds = viagemData.participantes_detalhes
+            ? viagemData.participantes_detalhes.map(p => p.id)
+            : [];
 
         setFormData({
           cliente_id: viagemData.cliente_id.toString(), // Precisa ser string para o select
@@ -66,6 +72,7 @@ function EditarViagem() {
           pagamento_status: viagemData.pagamento_status,
           documento_status: viagemData.documento_status,
           observacoes: viagemData.observacoes || '',
+          participantes_ids: existingParticipantsIds, // NOVO: Define os participantes existentes
         });
 
       } catch (err) {
@@ -82,8 +89,16 @@ function EditarViagem() {
   }, [viagemId]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, options } = e.target;
+
+    if (name === "participantes_ids") {
+      const selectedOptions = Array.from(options)
+        .filter(option => option.selected)
+        .map(option => parseInt(option.value));
+      setFormData(prev => ({ ...prev, [name]: selectedOptions }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
     setMensagem('');
     setErro('');
   };
@@ -104,17 +119,27 @@ function EditarViagem() {
     try {
         const valorLimpo = String(formData.valor).replace(/\./g, '').replace(',', '.');
         valorNumerico = parseFloat(valorLimpo);
-        if (isNaN(valorNumerico)) throw new Error("Valor inválido");
+        if (isNaN(valorNumerico)) {
+            throw new Error("Valor inválido");
+        }
     } catch (error) {
         setErro("O campo Valor da Viagem deve ser um número válido (ex: 1250,75).");
         setSubmitting(false);
         return;
     }
 
+    // Garante que o cliente principal está sempre na lista de participantes
+    const finalParticipantesIds = Array.from(new Set([
+        parseInt(formData.cliente_id),
+        ...(formData.participantes_ids || []).map(id => parseInt(id))
+    ])).filter(id => !isNaN(id));
+
+
     const dadosViagemParaAtualizar = {
       ...formData,
       cliente_id: parseInt(formData.cliente_id),
-      valor: valorNumerico.toFixed(2), // Envia o valor numérico formatado
+      valor: valorNumerico.toFixed(2),
+      participantes_ids: finalParticipantesIds, // NOVO: Envia a lista de participantes atualizada
     };
 
     try {
@@ -151,15 +176,21 @@ function EditarViagem() {
   if (erro && !formData.destino) { // Se houver erro e nenhum dado do formulário carregado
     return <div className="mensagem-feedback erro">{erro}</div>;
   }
-  
+
   const tituloCliente = viagemOriginal?.nome_cliente || (formData.cliente_id ? `Cliente ID ${formData.cliente_id}` : 'Cliente');
   const tituloDestino = viagemOriginal?.destino || formData.destino || 'Destino';
-
 
   return (
     <div className="editar-viagem-container">
       <h2>Editar Viagem: {tituloDestino} (Cliente: {tituloCliente})</h2>
-      
+      {viagemOriginal?.participantes_detalhes && viagemOriginal.participantes_detalhes.length > 1 && (
+        <p className="info-participantes-existentes">
+          Esta viagem possui {viagemOriginal.participantes_detalhes.length} participantes:
+          {' '}
+          {viagemOriginal.participantes_detalhes.map(p => p.nome).join(', ')}.
+        </p>
+      )}
+
       {mensagem && <p className="mensagem-feedback sucesso">{mensagem}</p>}
       {erro && !submitting && <p className="mensagem-feedback erro">{erro}</p>} {/* Mostra erro apenas se não estiver submetendo para evitar piscar */}
 
@@ -167,7 +198,7 @@ function EditarViagem() {
         <div className="form-section">
           <h3 className="form-section-title">Detalhes do Cliente e Destino</h3>
           <div className="form-group">
-            <label htmlFor="cliente_id">Cliente *</label>
+            <label htmlFor="cliente_id">Cliente Principal *</label>
             <select id="cliente_id" name="cliente_id" value={formData.cliente_id} onChange={handleChange} required>
               <option value="">Selecione um Cliente</option>
               {clientes.map(cliente => (
@@ -178,6 +209,31 @@ function EditarViagem() {
           <div className="form-group">
             <label htmlFor="destino">Destino *</label>
             <input type="text" id="destino" name="destino" value={formData.destino} onChange={handleChange} required />
+          </div>
+        </div>
+
+        {/* NOVO: Seção para adicionar/editar participantes */}
+        <div className="form-section">
+          <h3 className="form-section-title">Outros Participantes (Opcional)</h3>
+          <div className="form-group">
+            <label htmlFor="participantes_ids">Selecione Clientes Adicionais:</label>
+            <select
+              name="participantes_ids"
+              id="participantes_ids"
+              multiple
+              value={formData.participantes_ids.map(String)} // Valores do select sempre são strings
+              onChange={handleChange}
+              className="select-multiple-participantes"
+            >
+              {clientes
+                .filter(cliente => cliente.id !== parseInt(formData.cliente_id)) // Exclui o cliente principal da lista de seleção
+                .map(cliente => (
+                  <option key={cliente.id} value={cliente.id}>
+                    {cliente.nome} (ID: {cliente.id})
+                  </option>
+                ))}
+            </select>
+            <p className="hint-text">Mantenha 'Ctrl' (Windows/Linux) ou 'Cmd' (Mac) pressionado para selecionar múltiplos clientes.</p>
           </div>
         </div>
 
@@ -194,19 +250,19 @@ function EditarViagem() {
             </div>
           </div>
         </div>
-        
+
         <div className="form-section">
           <h3 className="form-section-title">Valores e Status</h3>
           <div className="form-group">
             <label htmlFor="valor">Valor da Viagem (R$) *</label>
-            <input 
+            <input
               type="text" // Usar text para melhor formatação e validação no backend/submit
-              id="valor" 
-              name="valor" 
-              placeholder="Ex: 1250,75" 
-              value={formData.valor} 
-              onChange={handleChange} 
-              required 
+              id="valor"
+              name="valor"
+              placeholder="Ex: 1250,75"
+              value={formData.valor}
+              onChange={handleChange}
+              required
             />
           </div>
           <div className="form-group-inline">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaEye, FaArrowCircleRight, FaTrash } from 'react-icons/fa';
+import { FaEye, FaArrowCircleRight, FaTrash, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa'; // Importar mais ícones
 import './ClienteDetalhes.css'; // Reutilizando temporariamente, idealmente crie um dedicado
 
 function HistoricoGeralOrcamentos() {
@@ -15,6 +15,7 @@ function HistoricoGeralOrcamentos() {
       setLoading(true);
       setError(null);
       try {
+        // Garantir que o status_orcamento e viagem_id_referencia sejam retornados
         const response = await fetch('http://localhost:3000/orcamentos');
         if (!response.ok) {
           throw new Error('Falha ao carregar o histórico geral de orçamentos.');
@@ -41,6 +42,10 @@ function HistoricoGeralOrcamentos() {
   };
 
   const handleConverterParaViagem = (orcamento) => {
+    if (orcamento.status_orcamento === 'convertido') {
+      alert('Este orçamento já foi convertido em uma viagem.');
+      return;
+    }
     console.log("Dados do orçamento para converter:", orcamento);
     navigate('/viagens/nova-de-orcamento', { state: { orcamentoOrigem: orcamento } });
   };
@@ -57,8 +62,8 @@ function HistoricoGeralOrcamentos() {
           alert(`Orçamento para "${destinoOrcamento}" (ID: ${orcamentoId}) excluído com sucesso!`);
         } else {
           const errorData = await res.json().catch(() => null);
-          const mensagemErro = errorData && errorData.erro 
-                             ? errorData.erro 
+          const mensagemErro = errorData && errorData.erro
+                             ? errorData.erro
                              : `Status: ${res.status}`;
           alert(`Erro ao excluir o orçamento "${destinoOrcamento}": ${mensagemErro}`);
         }
@@ -78,16 +83,17 @@ function HistoricoGeralOrcamentos() {
   }
 
   return (
-    <div className="cliente-detalhes-container" style={{maxWidth: '1200px'}}> 
+    <div className="cliente-detalhes-container" style={{maxWidth: '1200px'}}>
       <h2>Histórico Geral de Orçamentos</h2>
       {orcamentos.length > 0 ? (
         <table className="historico-orcamentos-table">
           <thead>
             <tr>
               <th>Data</th>
-              <th>Cliente</th> 
+              <th>Cliente</th>
               <th>Destino</th>
               <th className="text-right">Total (R$)</th>
+              <th>Status</th> {/* NOVO: Coluna para status */}
               <th>Observações</th>
               <th>Ações</th>
             </tr>
@@ -98,9 +104,9 @@ function HistoricoGeralOrcamentos() {
                 <td>{orc.data_formatada || new Date(orc.data_criacao).toLocaleDateString('pt-BR')}</td>
                 <td>
                   {orc.nome_cliente ? (
-                    <span 
-                      onClick={() => navigate(`/clientes/${orc.cliente_id}`)} 
-                      style={{cursor: 'pointer', color: '#0B3D91', textDecoration: 'underline'}} 
+                    <span
+                      onClick={() => navigate(`/clientes/${orc.cliente_id}`)}
+                      style={{cursor: 'pointer', color: '#0B3D91', textDecoration: 'underline'}}
                       title="Ver detalhes do cliente"
                     >
                       {orc.nome_cliente}
@@ -113,24 +119,40 @@ function HistoricoGeralOrcamentos() {
                 </td>
                 <td>{orc.destino}</td>
                 <td className="text-right">R$ {parseFloat(orc.total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td> {/* NOVO: Célula para status */}
+                    <span className={`orcamento-status-tag ${orc.status_orcamento}`}>
+                        {orc.status_orcamento === 'convertido' ? <FaCheckCircle /> : <FaExclamationTriangle />}
+                        {' '} {orc.status_orcamento === 'convertido' ? 'Convertido' : 'Pendente'}
+                        {orc.viagem_id_referencia && (
+                          <span
+                            onClick={() => navigate(`/viagens/editar/${orc.viagem_id_referencia}`)}
+                            style={{cursor: 'pointer', color: '#0B3D91', textDecoration: 'underline', marginLeft: '5px'}}
+                            title="Ver detalhes da viagem"
+                          >
+                            (Viagem ID: {orc.viagem_id_referencia})
+                          </span>
+                        )}
+                    </span>
+                </td>
                 <td>{orc.observacoes || '-'}</td>
                 <td className="actions-cell">
-                   <button 
-                      onClick={() => handleVerDetalhesOrcamento(orc)} 
-                      className="btn-action-table btn-view-details" 
+                   <button
+                      onClick={() => handleVerDetalhesOrcamento(orc)}
+                      className="btn-action-table btn-view-details"
                       title="Ver Detalhes do Orçamento">
                      <FaEye />
                    </button>
                    <button
                       onClick={() => handleConverterParaViagem(orc)}
-                      className="btn-action-table btn-convert-viagem"
-                      title="Converter Orçamento para Viagem">
+                      className={`btn-action-table btn-convert-viagem ${orc.status_orcamento === 'convertido' ? 'disabled' : ''}`} // Desabilitar se já convertido
+                      title={orc.status_orcamento === 'convertido' ? 'Já convertido para viagem' : 'Converter Orçamento para Viagem'}
+                      disabled={orc.status_orcamento === 'convertido'}>
                      <FaArrowCircleRight />
                    </button>
                    <button
                       onClick={() => handleExcluirOrcamento(orc.id, orc.destino)}
-                      className="btn-action-table btn-delete-orcamento" 
-                      style={{color: '#dc3545'}} 
+                      className="btn-action-table btn-delete-orcamento"
+                      style={{color: '#dc3545'}}
                       title="Excluir Orçamento">
                      <FaTrash />
                    </button>
@@ -151,8 +173,19 @@ function HistoricoGeralOrcamentos() {
             <p><strong>Destino:</strong> {orcamentoDetalhado.destino}</p>
             <p><strong>Data:</strong> {orcamentoDetalhado.data_formatada || new Date(orcamentoDetalhado.data_criacao).toLocaleDateString()}</p>
             <p><strong>Total:</strong> R$ {parseFloat(orcamentoDetalhado.total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p><strong>Status:</strong> <span className={`orcamento-status-tag ${orcamentoDetalhado.status_orcamento}`}>{orcamentoDetalhado.status_orcamento === 'convertido' ? 'Convertido' : 'Pendente'}</span>
+                {orcamentoDetalhado.viagem_id_referencia && (
+                     <span
+                        onClick={() => navigate(`/viagens/editar/${orcamentoDetalhado.viagem_id_referencia}`)}
+                        style={{cursor: 'pointer', color: '#0B3D91', textDecoration: 'underline', marginLeft: '5px'}}
+                        title="Ver detalhes da viagem"
+                    >
+                        (Viagem ID: {orcamentoDetalhado.viagem_id_referencia})
+                    </span>
+                )}
+            </p> {/* NOVO: Exibir status e referência */}
             <h5>Itens:</h5>
-            {orcamentoDetalhado.itens && Array.isArray(orcamentoDetalhado.itens) ? ( 
+            {orcamentoDetalhado.itens && Array.isArray(orcamentoDetalhado.itens) ? (
                 <ul>
                 {orcamentoDetalhado.itens.map((item, index) => (
                     <li key={index}>{item.descricao}: R$ {parseFloat(item.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</li>

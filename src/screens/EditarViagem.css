@@ -19,6 +19,17 @@
   padding-bottom: 15px;
 }
 
+.info-participantes-existentes { /* NOVO: Estilo para a lista de participantes na edição */
+    background-color: #e0e5eb;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    color: #495057;
+    text-align: center;
+    line-height: 1.4;
+}
+
 .form-editar-viagem .form-section {
   margin-bottom: 25px;
   padding: 20px;
@@ -53,7 +64,8 @@
 .form-editar-viagem input[type="date"],
 .form-editar-viagem input[type="number"],
 .form-editar-viagem select,
-.form-editar-viagem textarea {
+.form-editar-viagem textarea,
+.form-editar-viagem .select-multiple-participantes { /* NOVO: Estilo para o select múltiplo */
   width: 100%;
   padding: 10px 12px;
   border-radius: 6px;
@@ -67,7 +79,8 @@
 .form-editar-viagem input[type="date"]:focus,
 .form-editar-viagem input[type="number"]:focus,
 .form-editar-viagem select:focus,
-.form-editar-viagem textarea:focus {
+.form-editar-viagem textarea:focus,
+.form-editar-viagem .select-multiple-participantes:focus { /* NOVO: Estilo para o select múltiplo */
   border-color: #0B3D91;
   box-shadow: 0 0 0 0.2rem rgba(11, 61, 145, 0.25);
   outline: none;
@@ -166,4 +179,11 @@
   padding: 20px;
   font-size: 1.1rem;
   color: #495057;
+}
+
+.hint-text { /* NOVO: Estilo para texto de dica */
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 5px;
+    padding-left: 5px;
 }

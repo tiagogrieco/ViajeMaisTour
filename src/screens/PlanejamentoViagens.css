@@ -187,6 +187,15 @@
   color: #1f2937;
 }
 
+.participantes-list { /* NOVO: Estilo para a lista de participantes */
+    font-size: 0.9rem;
+    color: #495057;
+    margin-top: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+}
+
 .status-tags {
   display: flex;
   flex-wrap: wrap;
