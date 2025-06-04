@@ -1,0 +1,65 @@
+{
+  "viagens": [
+    {
+      "id": 1,
+      "cliente_id": 1,
+      "destino": "Cancun",
+      "checkin": "2025-07-10",
+      "checkout": "2025-07-17",
+      "valor": "1800.50",
+      "pagamento_status": "pago",
+      "documento_status": "completo",
+      "observacoes": "Pacote com tudo incluído."
+    },
+    {
+      "id": 2,
+      "cliente_id": 2,
+      "destino": "Paris",
+      "checkin": "2025-09-05",
+      "checkout": "2025-09-12",
+      "valor": "2500.00",
+      "pagamento_status": "pendente",
+      "documento_status": "aguardando_vistos",
+      "observacoes": "Passagem e hotel, sem passeios."
+    },
+    {
+      "id": 3,
+      "cliente_id": 1,
+      "destino": "Gramado",
+      "checkin": "2025-06-20",
+      "checkout": "2025-06-25",
+      "valor": "850.75",
+      "pagamento_status": "parcial",
+      "documento_status": "completo",
+      "observacoes": "Viagem de curta duração, hotel boutique."
+    },
+    {
+      "id": 4,
+      "cliente_id": 3,
+      "destino": "Machu Picchu",
+      "checkin": "2025-08-01",
+      "checkout": "2025-08-08",
+      "valor": "1600.00",
+      "pagamento_status": "pago",
+      "documento_status": "completo",
+      "observacoes": "Inclui guia e taxas de parque."
+    },
+    {
+      "id": 5,
+      "cliente_id": 2,
+      "destino": "Berlim",
+      "checkin": "2025-10-10",
+      "checkout": "2025-10-15",
+      "valor": "1200.00",
+      "pagamento_status": "cancelado",
+      "documento_status": "atrasado",
+      "observacoes": "Viagem cancelada pelo cliente."
+    }
+  ],
+  "clientes": [
+  ],
+  "tarefas": [
+  ],
+  "orcamentos": [
+  ]
+}

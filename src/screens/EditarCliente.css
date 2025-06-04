@@ -1,0 +1,131 @@
+.editar-cliente-container {
+  max-width: 700px;
+  margin: 40px auto;
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.editar-cliente-container h2 {
+  margin-bottom: 25px;
+  text-align: center;
+  color: #2c3e50;
+  font-size: 2rem;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 15px;
+}
+
+.form-editar-cliente .form-group {
+  margin-bottom: 15px;
+}
+
+.form-editar-cliente label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #34495e;
+  font-size: 0.95rem;
+}
+
+.form-editar-cliente input[type="text"],
+.form-editar-cliente input[type="email"],
+.form-editar-cliente input[type="tel"],
+.form-editar-cliente input[type="date"],
+.form-editar-cliente textarea {
+  width: calc(100% - 20px);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.form-editar-cliente textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-section-title {
+  font-size: 1.3rem;
+  color: #0B3D91;
+  margin-top: 30px;
+  margin-bottom: 15px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #cce;
+  font-weight: bold;
+}
+
+.form-group-inline {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+.form-group-inline .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 30px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.form-actions button {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.form-actions button:hover {
+  transform: translateY(-2px);
+}
+
+.btn-primary {
+  background-color: #28a745;
+  color: white;
+}
+.btn-primary:hover {
+  background-color: #218838;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.success-message {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 10px 15px;
+  border: 1px solid #c3e6cb;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px 15px;
+  border: 1px solid #f5c6cb;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  text-align: center;
+}

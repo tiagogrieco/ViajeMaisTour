@@ -1,0 +1,280 @@
+/* src/screens/ClienteDetalhes.css */
+.cliente-detalhes-container {
+  padding: 2.5rem;
+  background: #ffffff; /* Fundo branco para o container principal */
+  border-radius: 16px;
+  max-width: 900px; /* Aumentado para acomodar mais informações */
+  margin: 2rem auto;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.cliente-detalhes-container h2 {
+  margin-bottom: 2rem; /* Mais espaço */
+  color: #2c3e50; /* Azul escuro acinzentado */
+  text-align: center;
+  font-size: 2rem; /* Ligeiramente menor */
+  border-bottom: 1px solid #e0e5eb; /* Linha mais sutil */
+  padding-bottom: 1rem;
+  word-break: break-word;
+}
+
+.cliente-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsivo */
+  gap: 20px 25px; /* Gap horizontal e vertical */
+  margin-bottom: 2.5rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 18px; /* Padding ajustado */
+  background-color: #f8f9fa; /* Fundo muito claro para itens */
+  border-radius: 8px;
+  border: 1px solid #e9ecef; /* Borda sutil */
+}
+
+.info-item strong {
+  color: #0B3D91; /* Cor primária para o rótulo */
+  font-size: 0.85rem; /* Tamanho do rótulo */
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-item span {
+  font-size: 1rem; /* Tamanho do valor */
+  color: #34495e; /* Cor do valor */
+  word-wrap: break-word;
+  line-height: 1.5;
+}
+
+.info-item.full-width {
+  grid-column: 1 / -1; /* Ocupa toda a largura */
+}
+
+.cliente-detalhes-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 2.5rem;
+  flex-wrap: wrap;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e5eb;
+}
+
+.cliente-detalhes-actions button {
+  padding: 10px 22px; /* Padding ajustado */
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem; /* Fonte dos botões */
+  font-weight: 600; /* Negrito */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.cliente-detalhes-actions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn-back {
+  background-color: #6c757d; /* Cinza */
+  color: white;
+}
+.btn-back:hover {
+  background-color: #5a6268;
+}
+
+.btn-edit {
+  background-color: #007bff; /* Azul */
+  color: white;
+}
+.btn-edit:hover {
+  background-color: #0056b3;
+}
+
+.btn-delete {
+  background-color: #dc3545; /* Vermelho */
+  color: white;
+}
+.btn-delete:hover {
+  background-color: #c82333;
+}
+
+.loading-message, .error-message, .no-data-message {
+  text-align: center;
+  font-size: 1.1rem; /* Tamanho ajustado */
+  color: #555;
+  margin: 2rem auto; /* Margem para centralizar e espaçar */
+  padding: 20px;
+  background-color: #f0f3f6;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  max-width: 500px;
+}
+
+.error-message {
+  color: #721c24; /* Cor do texto de erro */
+  background-color: #f8d7da; /* Fundo vermelho claro */
+  border: 1px solid #f5c6cb; /* Borda vermelha clara */
+}
+.error-message.mini-error {
+  font-size: 0.9rem;
+  padding: 10px 15px;
+  margin-top: 0;
+  margin-bottom: 20px !important;
+  background-color: #fff3cd; /* Amarelo para avisos */
+  color: #856404;
+  border-color: #ffeeba;
+}
+
+
+/* Estilos para Histórico de Orçamentos */
+.historico-orcamentos-section {
+  margin-top: 3rem; /* Mais espaço acima */
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e5eb;
+}
+
+.historico-orcamentos-section h3 {
+  font-size: 1.5rem; /* Tamanho ajustado */
+  color: #34495e; /* Cinza escuro azulado */
+  margin-bottom: 1.25rem; /* Espaçamento abaixo */
+  text-align: left;
+}
+
+.historico-orcamentos-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem; /* Fonte da tabela */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-radius: 8px;
+  overflow: hidden; /* Para o border-radius funcionar nas bordas da tabela */
+}
+
+.historico-orcamentos-table th,
+.historico-orcamentos-table td {
+  border-bottom: 1px solid #e9ecef; /* Apenas borda inferior */
+  padding: 12px 15px; /* Padding ajustado */
+  text-align: left;
+  vertical-align: middle;
+}
+
+.historico-orcamentos-table th {
+  background-color: #f0f3f6; /* Fundo do cabeçalho */
+  color: #495057; /* Cor do texto do cabeçalho */
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-top: 1px solid #e9ecef; /* Borda superior para o cabeçalho */
+}
+
+
+.historico-orcamentos-table tbody tr:nth-child(even) {
+  background-color: #fcfdff; /* Fundo alternado muito sutil */
+}
+
+.historico-orcamentos-table tbody tr:hover {
+  background-color: #eef2f7; /* Hover mais suave */
+}
+
+.historico-orcamentos-table .text-right {
+  text-align: right;
+}
+
+.historico-orcamentos-table .actions-cell {
+  text-align: center; /* Centraliza os botões de ação */
+  width: 80px; /* Largura fixa para célula de ações */
+}
+
+.btn-action-table {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  font-size: 1rem; /* Tamanho do ícone */
+  color: #007bff;
+  transition: color 0.2s ease, transform 0.2s ease;
+  margin: 0 3px;
+}
+.btn-action-table:hover {
+  transform: scale(1.1);
+}
+
+.btn-action-table.btn-view-details { color: #17a2b8; } /* Ciano para detalhes */
+.btn-action-table.btn-view-details:hover { color: #117a8b; }
+
+.btn-action-table.btn-view-pdf { color: #28a745; }
+.btn-action-table.btn-view-pdf:hover { color: #1e7e34; }
+
+/* Modal para Detalhes do Orçamento */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #fff;
+  padding: 25px 30px;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  width: 90%;
+  max-width: 550px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-content h4 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+  color: #0B3D91;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.modal-content p, .modal-content li {
+  font-size: 0.95rem;
+  color: #333;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+.modal-content ul {
+  padding-left: 20px;
+  margin-bottom: 15px;
+}
+
+.modal-content strong {
+  color: #111;
+}
+
+.btn-modal-close {
+  display: block;
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #0B3D91;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.btn-modal-close:hover {
+  background-color: #072e6c;
+}
