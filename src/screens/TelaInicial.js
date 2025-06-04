@@ -24,11 +24,11 @@ function TelaInicial() {
   useEffect(() => {
     const hora = new Date().getHours();
     if (hora >= 5 && hora < 12) {
-      setSaudacao('Bom dia');
+      setSaudacao('Bom dia Aline');
     } else if (hora >= 12 && hora < 18) {
-      setSaudacao('Boa tarde');
+      setSaudacao('Boa tarde Aline');
     } else {
-      setSaudacao('Boa noite');
+      setSaudacao('Boa noite Aline');
     }
   }, []);
 
