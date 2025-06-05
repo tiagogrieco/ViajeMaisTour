@@ -1,3 +1,4 @@
+// src/screens/HistoricoGeralOrcamentos.js
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaEye, FaArrowCircleRight, FaTrash, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa'; // Importar mais ícones
@@ -10,13 +11,16 @@ function HistoricoGeralOrcamentos() {
   const navigate = useNavigate();
   const [orcamentoDetalhado, setOrcamentoDetalhado] = useState(null);
 
+  // Define a URL base do backend usando a variável de ambiente
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   useEffect(() => {
     const fetchTodosOrcamentos = async () => {
       setLoading(true);
       setError(null);
       try {
         // Garantir que o status_orcamento e viagem_id_referencia sejam retornados
-        const response = await fetch('http://localhost:3000/orcamentos');
+        const response = await fetch(`${BACKEND_URL}/orcamentos`);
         if (!response.ok) {
           throw new Error('Falha ao carregar o histórico geral de orçamentos.');
         }
@@ -31,7 +35,7 @@ function HistoricoGeralOrcamentos() {
     };
 
     fetchTodosOrcamentos();
-  }, []);
+  }, [BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   const handleVerDetalhesOrcamento = (orcamento) => {
     setOrcamentoDetalhado(orcamento);
@@ -53,7 +57,7 @@ function HistoricoGeralOrcamentos() {
   const handleExcluirOrcamento = async (orcamentoId, destinoOrcamento) => {
     if (window.confirm(`Tem certeza que deseja excluir o orçamento para "${destinoOrcamento}" (ID: ${orcamentoId})? Esta ação é irreversível.`)) {
       try {
-        const res = await fetch(`http://localhost:3000/orcamentos/${orcamentoId}`, {
+        const res = await fetch(`${BACKEND_URL}/orcamentos/${orcamentoId}`, {
           method: 'DELETE',
         });
 
@@ -203,5 +207,3 @@ function HistoricoGeralOrcamentos() {
     </div>
   );
 }
-
-export default HistoricoGeralOrcamentos;

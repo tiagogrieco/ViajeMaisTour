@@ -1,3 +1,4 @@
+// src/screens/GestaoTarefas.js
 import React, { useEffect, useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import {
@@ -39,12 +40,15 @@ export default function GestaoTarefas() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  // Define a URL base do backend usando a variável de ambiente
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   const fetchData = async () => {
     try {
       setLoading(true);
       const [tarefasRes, clientesRes] = await Promise.all([
-        fetch('http://localhost:3000/tarefas'),
-        fetch('http://localhost:3000/clientes')
+        fetch(`${BACKEND_URL}/tarefas`),
+        fetch(`${BACKEND_URL}/clientes`)
       ]);
 
       if (!tarefasRes.ok) throw new Error('Erro ao buscar tarefas.');
@@ -79,7 +83,7 @@ export default function GestaoTarefas() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   const getClienteNome = (cliente_id) => {
     const cliente = clientes.find(c => c.id === cliente_id);
@@ -113,7 +117,7 @@ export default function GestaoTarefas() {
     setTarefas(newTarefasState);
 
     try {
-      const res = await fetch(`http://localhost:3000/tarefas/${taskId}`, { // Usar taskId numérico
+      const res = await fetch(`${BACKEND_URL}/tarefas/${taskId}`, { // Usar taskId numérico
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...movedTask, status: destColKey }) // Atualiza o status no objeto da tarefa
@@ -134,7 +138,7 @@ export default function GestaoTarefas() {
   const handleDeleteTask = async (taskId, taskDesc) => {
     if (window.confirm(`Tem certeza que deseja excluir a tarefa "${taskDesc}"?`)) {
       try {
-        const res = await fetch(`http://localhost:3000/tarefas/${taskId}`, {
+        const res = await fetch(`${BACKEND_URL}/tarefas/${taskId}`, {
           method: 'DELETE',
         });
         if (res.ok) {

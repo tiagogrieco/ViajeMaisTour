@@ -1,3 +1,4 @@
+// src/screens/TelaInicial.js
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './TelaInicial.css';
@@ -21,6 +22,9 @@ function TelaInicial() {
   const [loadingProximasViagens, setLoadingProximasViagens] = useState(true);
   const [errorProximasViagens, setErrorProximasViagens] = useState(null);
 
+  // Define a URL base do backend usando a variável de ambiente
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   useEffect(() => {
     const hora = new Date().getHours();
     if (hora >= 5 && hora < 12) {
@@ -36,7 +40,7 @@ function TelaInicial() {
     const fetchResumoData = async () => {
       setLoadingResumo(true);
       try {
-        const resumoResponse = await fetch('http://localhost:3000/resumo');
+        const resumoResponse = await fetch(`${BACKEND_URL}/resumo`);
         if (!resumoResponse.ok) {
             throw new Error('Erro ao carregar dados de resumo do backend.');
         }
@@ -59,7 +63,7 @@ function TelaInicial() {
     const fetchProximasViagens = async () => {
       setLoadingProximasViagens(true);
       try {
-        const response = await fetch('http://localhost:3000/viagens/proximas');
+        const response = await fetch(`${BACKEND_URL}/viagens/proximas`);
         if (!response.ok) {
           throw new Error('Falha ao carregar próximas viagens.');
         }
@@ -75,7 +79,7 @@ function TelaInicial() {
 
     fetchResumoData();
     fetchProximasViagens();
-  }, []);
+  }, [BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   // FUNÇÃO DE FORMATAR DATA CORRIGIDA
   const formatarData = (dataISO) => {
@@ -178,5 +182,3 @@ function TelaInicial() {
     </div>
   );
 }
-
-export default TelaInicial;

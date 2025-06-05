@@ -1,3 +1,4 @@
+// src/screens/NovoCliente.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './NovoCliente.css';
@@ -24,6 +25,9 @@ function NovoCliente() {
   const [mensagem, setMensagem] = useState('');
   const [erro, setErro] = useState('');
   const navigate = useNavigate();
+
+  // Define a URL base do backend usando a variável de ambiente
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -61,7 +65,7 @@ function NovoCliente() {
     }
 
     try {
-      const res = await fetch('http://localhost:3000/clientes', {
+      const res = await fetch(`${BACKEND_URL}/clientes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -131,5 +135,3 @@ function NovoCliente() {
     </div>
   );
 }
-
-export default NovoCliente;

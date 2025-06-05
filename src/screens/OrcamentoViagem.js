@@ -1,3 +1,4 @@
+// src/screens/OrcamentoViagem.js
 import React, { useState, useEffect } from 'react';
 import './OrcamentoViagem.css';
 import { FaPlus, FaTrash, FaFilePdf, FaCalculator } from 'react-icons/fa';
@@ -23,15 +24,18 @@ export default function OrcamentoViagem() {
   const [mensagem, setMensagem] = useState('');
   const [erro, setErro] = useState('');
 
+  // Define a URL base do backend usando a variável de ambiente
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   useEffect(() => {
-    fetch('http://localhost:3000/clientes') // Certifique-se que a porta está correta
+    fetch(`${BACKEND_URL}/clientes`) // Certifique-se que a porta está correta
       .then(res => res.json())
       .then(data => setClientes(data))
       .catch(err => {
         console.error('Erro ao buscar clientes:', err);
         setErro('Falha ao carregar lista de clientes.');
       });
-  }, []);
+  }, [BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   useEffect(() => {
     const cliente = clientes.find(c => c.id === parseInt(dados.cliente_id));
@@ -92,7 +96,7 @@ export default function OrcamentoViagem() {
 
   const salvarOrcamentoNoServidor = async (orcamentoData) => {
     try {
-      const response = await fetch('http://localhost:3000/orcamentos', {
+      const response = await fetch(`${BACKEND_URL}/orcamentos`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

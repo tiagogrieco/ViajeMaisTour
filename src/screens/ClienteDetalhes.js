@@ -1,3 +1,4 @@
+// src/screens/ClienteDetalhes.js
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './ClienteDetalhes.css';
@@ -15,11 +16,14 @@ export default function ClienteDetalhes() {
   const [error, setError] = useState(null);
   const [orcamentoDetalhado, setOrcamentoDetalhado] = useState(null);
 
+  // Define a URL base do backend usando a variável de ambiente
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   useEffect(() => {
     const fetchClienteData = async () => {
       setLoadingCliente(true);
       try {
-        const response = await fetch(`http://localhost:3000/clientes/${id}`);
+        const response = await fetch(`${BACKEND_URL}/clientes/${id}`);
         if (!response.ok) {
           throw new Error('Cliente não encontrado ou falha ao carregar dados do cliente.');
         }
@@ -36,7 +40,7 @@ export default function ClienteDetalhes() {
     const fetchOrcamentosData = async () => {
       setLoadingOrcamentos(true);
       try {
-        const response = await fetch(`http://localhost:3000/orcamentos?cliente_id=${parseInt(id)}`);
+        const response = await fetch(`${BACKEND_URL}/orcamentos?cliente_id=${parseInt(id)}`);
         if (!response.ok) {
           throw new Error('Falha ao carregar histórico de orçamentos.');
         }
@@ -54,7 +58,7 @@ export default function ClienteDetalhes() {
     const fetchViagensData = async () => {
         setLoadingViagens(true);
         try {
-            const response = await fetch(`http://localhost:3000/viagens?cliente_id=${parseInt(id)}&participante_id=${parseInt(id)}`);
+            const response = await fetch(`${BACKEND_URL}/viagens?cliente_id=${parseInt(id)}&participante_id=${parseInt(id)}`);
             if (!response.ok) {
                 throw new Error('Falha ao carregar histórico de viagens.');
             }
@@ -72,13 +76,13 @@ export default function ClienteDetalhes() {
     fetchClienteData();
     fetchOrcamentosData();
     fetchViagensData(); // NOVO: Chamar a função para buscar viagens
-  }, [id]);
+  }, [id, BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   const handleDeleteCliente = async () => {
     if (!cliente) return;
     if (window.confirm(`Tem certeza que deseja excluir o cliente ${cliente.nome}? Essa ação é irreversível e não excluirá orçamentos ou viagens vinculados (conforme Opção A definida).`)) {
       try {
-        const res = await fetch(`http://localhost:3000/clientes/${cliente.id}`, {
+        const res = await fetch(`${BACKEND_URL}/clientes/${cliente.id}`, {
           method: 'DELETE',
         });
 
@@ -113,7 +117,7 @@ export default function ClienteDetalhes() {
   const handleExcluirOrcamento = async (orcamentoId, destinoOrcamento) => {
     if (window.confirm(`Tem certeza que deseja excluir o orçamento para "${destinoOrcamento}" (ID: ${orcamentoId})? Esta ação é irreversível.`)) {
       try {
-        const res = await fetch(`http://localhost:3000/orcamentos/${orcamentoId}`, {
+        const res = await fetch(`${BACKEND_URL}/orcamentos/${orcamentoId}`, {
           method: 'DELETE',
         });
 

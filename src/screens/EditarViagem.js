@@ -1,3 +1,4 @@
+// src/screens/EditarViagem.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './EditarViagem.css'; // Importar o CSS
@@ -25,14 +26,17 @@ function EditarViagem() {
   const [mensagem, setMensagem] = useState('');
   const [erro, setErro] = useState('');
 
+  // Define a URL base do backend usando a variável de ambiente
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   useEffect(() => {
     const fetchViagemEClientes = async () => {
       setLoading(true);
       setErro('');
       try {
         const [viagemRes, clientesRes] = await Promise.all([
-          fetch(`http://localhost:3000/viagens/${viagemId}`),
-          fetch('http://localhost:3000/clientes') // Buscar todos os clientes
+          fetch(`${BACKEND_URL}/viagens/${viagemId}`),
+          fetch(`${BACKEND_URL}/clientes`) // Buscar todos os clientes
         ]);
 
         if (!viagemRes.ok) {
@@ -86,7 +90,7 @@ function EditarViagem() {
     if (viagemId) {
       fetchViagemEClientes();
     }
-  }, [viagemId]);
+  }, [viagemId, BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   const handleChange = (e) => {
     const { name, value, options } = e.target;
@@ -143,7 +147,7 @@ function EditarViagem() {
     };
 
     try {
-      const response = await fetch(`http://localhost:3000/viagens/${viagemId}`, {
+      const response = await fetch(`${BACKEND_URL}/viagens/${viagemId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dadosViagemParaAtualizar),
@@ -307,5 +311,3 @@ function EditarViagem() {
     </div>
   );
 }
-
-export default EditarViagem;

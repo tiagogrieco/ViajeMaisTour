@@ -1,3 +1,4 @@
+// src/screens/GestaoClientes.js
 import React, { useEffect, useState } from 'react';
 import './GestaoClientes.css';
 import { Link } from 'react-router-dom';
@@ -9,10 +10,13 @@ function GestaoClientes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Define a URL base do backend usando a variável de ambiente
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   const fetchClientes = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:3000/clientes');
+      const res = await fetch(`${BACKEND_URL}/clientes`);
       if (!res.ok) {
         throw new Error('Erro ao carregar clientes. Tente novamente mais tarde.');
       }
@@ -28,12 +32,12 @@ function GestaoClientes() {
 
   useEffect(() => {
     fetchClientes();
-  }, []);
+  }, [BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   const handleDelete = async (id, nomeCliente) => {
     if (window.confirm(`Tem certeza que deseja excluir o cliente ${nomeCliente}? Essa ação é irreversível!`)) {
       try {
-        const res = await fetch(`http://localhost:3000/clientes/${id}`, {
+        const res = await fetch(`${BACKEND_URL}/clientes/${id}`, {
           method: 'DELETE',
         });
 
@@ -129,5 +133,3 @@ function GestaoClientes() {
     </div>
   );
 }
-
-export default GestaoClientes;

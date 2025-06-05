@@ -1,3 +1,4 @@
+// src/screens/PlanejamentoViagens.js
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './PlanejamentoViagens.css';
@@ -13,12 +14,15 @@ function PlanejamentoViagens() {
   const [filterStatusDocumento, setFilterStatusDocumento] = useState('');
   const navigate = useNavigate();
 
+  // Define a URL base do backend usando a variável de ambiente
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   const fetchData = async () => {
     try {
       setLoading(true);
       const [viagensRes, clientesRes] = await Promise.all([
-        fetch('http://localhost:3000/viagens'),
-        fetch('http://localhost:3000/clientes')
+        fetch(`${BACKEND_URL}/viagens`),
+        fetch(`${BACKEND_URL}/clientes`)
       ]);
 
       if (!viagensRes.ok) throw new Error('Erro ao carregar viagens.');
@@ -40,7 +44,7 @@ function PlanejamentoViagens() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   const getClienteNome = (cliente_id) => {
     const cliente = clientes.find(c => c.id === cliente_id);
@@ -50,7 +54,7 @@ function PlanejamentoViagens() {
   const handleDeleteViagem = async (viagemId, destino) => {
     if (window.confirm(`Tem certeza que deseja excluir a viagem para "${destino}"? Essa ação é irreversível!`)) {
       try {
-        const res = await fetch(`http://localhost:3000/viagens/${viagemId}`, {
+        const res = await fetch(`${BACKEND_URL}/viagens/${viagemId}`, {
           method: 'DELETE',
         });
         if (res.ok) {
@@ -207,5 +211,3 @@ function PlanejamentoViagens() {
     </div>
   );
 }
-
-export default PlanejamentoViagens;

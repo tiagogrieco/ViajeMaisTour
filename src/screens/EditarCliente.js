@@ -1,4 +1,5 @@
 // src/screens/EditarCliente.js
+// src/screens/EditarCliente.js
 import React, { useEffect, useState } from 'react';
 import './EditarCliente.css';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -29,11 +30,14 @@ function EditarCliente() {
   const [error, setError] = useState(null);
   const [mensagem, setMensagem] = useState('');
 
+  // Define a URL base do backend usando a variável de ambiente
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   useEffect(() => {
     const fetchClienteData = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:3000/clientes/${id}`); // Certifique-se que a porta está correta
+        const res = await fetch(`${BACKEND_URL}/clientes/${id}`); // Certifique-se que a porta está correta
         if (!res.ok) {
           throw new Error('Cliente não encontrado ou erro ao carregar.');
         }
@@ -56,7 +60,7 @@ function EditarCliente() {
       }
     };
     fetchClienteData();
-  }, [id]); // Removido formData das dependências para evitar loops
+  }, [id, BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -76,7 +80,7 @@ function EditarCliente() {
     // Adicione outras validações como no NovoCliente.js se desejar
 
     try {
-      const res = await fetch(`http://localhost:3000/clientes/${id}`, { // Certifique-se que a porta está correta
+      const res = await fetch(`${BACKEND_URL}/clientes/${id}`, { // Certifique-se que a porta está correta
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -208,5 +212,3 @@ function EditarCliente() {
     </div>
   );
 }
-
-export default EditarCliente;

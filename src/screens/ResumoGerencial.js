@@ -1,4 +1,5 @@
 // src/screens/ResumoGerencial.js
+// src/screens/ResumoGerencial.js
 import React, { useEffect, useState } from 'react';
 import Card from '../components/ui/Card'; // Verifique o caminho correto do seu componente Card
 import './ResumoGerencial.css';
@@ -16,23 +17,26 @@ function ResumoGerencial() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Define a URL base do backend usando a variável de ambiente
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   useEffect(() => {
     const fetchResumoData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:3000/resumo'); // Use a porta correta
+        const response = await fetch(`${BACKEND_URL}/resumo`); // Use a porta correta
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(errorData.erro || errorData.detalhes || 'Erro ao buscar dados do resumo.');
         }
         const data = await response.json();
         setResumo({
-            viagensMes: data.viagensMes || 0,
-            faturamentoTotal: data.faturamentoTotal || 0,
-            pagamentosPendentes: data.pagamentosPendentes || 0,
-            tarefasPendentes: data.tarefasPendentes || 0,
-            ticketMedio: data.ticketMedio || 0,
-            totalClientes: data.totalClientes || 0 // Adicionado
+            viagensMes: data.viagensMes,
+            faturamentoTotal: data.faturamentoTotal,
+            pagamentosPendentes: data.pagamentosPendentes,
+            tarefasPendentes: data.tarefasPendentes,
+            ticketMedio: data.ticketMedio,
+            totalClientes: data.totalClientes
         });
       } catch (err) {
         console.error('Erro ao buscar dados do resumo:', err);
@@ -43,7 +47,7 @@ function ResumoGerencial() {
     };
 
     fetchResumoData();
-  }, []);
+  }, [BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   if (loading) return <p className="loading-message">Carregando resumo gerencial...</p>;
   if (error) return <p className="error-message">Erro ao carregar resumo: {error}</p>;
@@ -60,7 +64,7 @@ function ResumoGerencial() {
           valueColor="#8e44ad"
         />
         <Card 
-          title="Viagens no Mês" 
+          title="Viagens Mês" 
           value={resumo.viagensMes} 
           icon={<FaCalendarCheck color="#2980b9" />}
           borderColor="#3498db" // Azul

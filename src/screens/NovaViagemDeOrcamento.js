@@ -1,3 +1,4 @@
+// src/screens/NovaViagemDeOrcamento.js
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './NovaViagemDeOrcamento.css'; // IMPORTAR O NOVO ARQUIVO CSS
@@ -26,10 +27,12 @@ function NovaViagemDeOrcamento() {
   const [loading, setLoading] = useState(false);
   const [clienteNomeExibicao, setClienteNomeExibicao] = useState('');
 
+  // Define a URL base do backend usando a variável de ambiente
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
   useEffect(() => {
     // Buscar todos os clientes para o select
-    fetch('http://localhost:3000/clientes')
+    fetch(`${BACKEND_URL}/clientes`)
       .then(res => res.json())
       .then(data => setClientes(data))
       .catch(err => {
@@ -54,7 +57,7 @@ function NovaViagemDeOrcamento() {
     } else {
       setErro("Dados do orçamento de origem não encontrados. Por favor, tente novamente a partir dos detalhes do cliente.");
     }
-  }, [orcamentoOrigem, location.state]);
+  }, [orcamentoOrigem, location.state, BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   const handleChange = (e) => {
     const { name, value, options } = e.target;
@@ -117,7 +120,7 @@ function NovaViagemDeOrcamento() {
     };
 
     try {
-      const response = await fetch('http://localhost:3000/viagens', {
+      const response = await fetch(`${BACKEND_URL}/viagens`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dadosViagemParaSalvar),
@@ -128,7 +131,7 @@ function NovaViagemDeOrcamento() {
 
         // Atualiza o status do orçamento original, se houver
         if (orcamentoOrigem && orcamentoOrigem.id) {
-            const updateOrcamentoRes = await fetch(`http://localhost:3000/orcamentos/${orcamentoOrigem.id}/status`, {
+            const updateOrcamentoRes = await fetch(`${BACKEND_URL}/orcamentos/${orcamentoOrigem.id}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status_orcamento: 'convertido', viagem_id_referencia: novaViagem.id })
@@ -285,5 +288,3 @@ function NovaViagemDeOrcamento() {
     </div>
   );
 }
-
-export default NovaViagemDeOrcamento;
