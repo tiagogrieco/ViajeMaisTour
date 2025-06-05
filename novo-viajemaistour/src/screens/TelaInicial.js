@@ -1,3 +1,4 @@
+// src/screens/TelaInicial.js
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './TelaInicial.css';
@@ -78,16 +79,18 @@ function TelaInicial() {
 
     fetchResumoData();
     fetchProximasViagens();
-  }, [BACKEND_URL]);
+  }, [BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   // FUNÇÃO DE FORMATAR DATA CORRIGIDA
   const formatarData = (dataISO) => {
     if (!dataISO) return '-';
-    const dataObj = new Date(dataISO);
-    if (isNaN(dataObj.getTime())) {
+    const dataObj = new Date(dataISO); // Alteração principal aqui
+    if (isNaN(dataObj.getTime())) { // Verifica se a data é inválida
         console.warn('Tentativa de formatar data inválida:', dataISO);
-        return 'Data Inválida';
+        return 'Data Inválida'; // Retorna uma string amigável em caso de falha
     }
+    // Usar timeZone: 'UTC' garante que a data seja interpretada como é (meia-noite UTC)
+    // e não convertida para o fuso local que poderia mudar o dia.
     return dataObj.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   };
 
@@ -96,12 +99,12 @@ function TelaInicial() {
     { icon: <FaUsers className="icon" />, label: 'Clientes', rota: '/clientes' },
     { icon: <FaPlane className="icon" />, label: 'Viagens', rota: '/viagens' },
     { icon: <FaCheckCircle className="icon" />, label: 'Tarefas', rota: '/tarefas' },
-    { icon: <FaFileInvoice className="icon" />, label: 'Hist. Orçamentos', rota: '/orcamentos/historico' },
+    { icon: <FaFileInvoice className="icon" />, label: 'Hist. Orçamentos', rota: '/orcamentos/historico' }, // Rota atualizada
   ];
 
   const botoesAcoesRapidas = [
     { icon: <FaUserPlus className="icon" />, label: 'Novo Cliente', rota: '/clientes/novo' },
-    { icon: <FaFileInvoice className="icon" />, label: 'Gerar Orçamento', rota: '/orcamento' },
+    { icon: <FaFileInvoice className="icon" />, label: 'Gerar Orçamento', rota: '/orcamento' }, // Adicionada ação rápida
     { icon: <FaChartBar className="icon" />, label: 'Ver Resumo Completo', rota: '/resumo' },
   ];
 
@@ -109,6 +112,7 @@ function TelaInicial() {
     <div className="home-container">
       <div className="home-content">
         <img src={logo} alt="Logo Viaje Mais Tour" className="home-logo" />
+        {/* Saudação ajustada para não ter nome fixo, pode vir de um estado de usuário logado no futuro */}
         <h1 className="home-title">🌎 {saudacao}!</h1> 
         <p className="home-subtitle">Seu painel de controle da Viaje Mais Tour.</p>
 
@@ -178,5 +182,3 @@ function TelaInicial() {
     </div>
   );
 }
-
-export default TelaInicial;

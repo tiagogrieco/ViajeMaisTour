@@ -1,15 +1,16 @@
-import React, { useEffect, useState, useCallback } from 'react'; // Adicionado useCallback
+// src/screens/GestaoTarefas.js
+import React, { useEffect, useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import {
   FaEdit,
   FaTrash,
   FaPlus,
   FaFlag,
-  FaUserAlt,
-  FaCalendarAlt,
-  FaClipboardList,
-  FaRegClock,
-  FaUserTag
+  FaUserAlt,        // Para cliente_id
+  FaCalendarAlt,    // Para data_vencimento
+  FaClipboardList,  // Para sub_descricao
+  FaRegClock,       // Para data_criacao
+  FaUserTag         // Para responsavel
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import './GestaoTarefas.css';
@@ -42,7 +43,7 @@ export default function GestaoTarefas() {
   // Define a URL base do backend usando a variável de ambiente
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-  const fetchData = useCallback(async () => { // Envolvido com useCallback
+  const fetchData = async () => {
     try {
       setLoading(true);
       const [tarefasRes, clientesRes] = await Promise.all([
@@ -66,6 +67,7 @@ export default function GestaoTarefas() {
         if (statusOrder.includes(tarefa.status)) {
           organized[tarefa.status].push(tarefa);
         } else {
+          // Se o status não for um dos esperados, coloque em pendente por padrão
           organized.pendente.push({...tarefa, status: 'pendente'});
         }
       });
@@ -77,11 +79,11 @@ export default function GestaoTarefas() {
     } finally {
       setLoading(false);
     }
-  }, [BACKEND_URL]); // Adicionado BACKEND_URL como dependência do useCallback
+  };
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]); // Removido 'fetchData' da lista de dependências do useEffect
+  }, [BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   const getClienteNome = (cliente_id) => {
     const cliente = clientes.find(c => c.id === cliente_id);
@@ -94,6 +96,7 @@ export default function GestaoTarefas() {
     if (!destination) return;
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
+    // O draggableId está como "task-${tarefa.id}", precisamos extrair o ID numérico
     const taskId = parseInt(draggableId.split('-')[1]);
 
     const sourceColKey = source.droppableId;
@@ -114,20 +117,21 @@ export default function GestaoTarefas() {
     setTarefas(newTarefasState);
 
     try {
-      const res = await fetch(`${BACKEND_URL}/tarefas/${taskId}`, {
+      const res = await fetch(`${BACKEND_URL}/tarefas/${taskId}`, { // Usar taskId numérico
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...movedTask, status: destColKey })
+        body: JSON.stringify({ ...movedTask, status: destColKey }) // Atualiza o status no objeto da tarefa
       });
       if (!res.ok) {
+        // Se falhar, reverter o estado (opcional, ou mostrar erro e pedir refresh)
         console.error('Falha ao atualizar tarefa no servidor, revertendo estado local.');
-        fetchData();
+        fetchData(); // Simplesmente recarrega os dados para consistência
         throw new Error('Erro ao atualizar tarefa no servidor.');
       }
     } catch (err) {
       console.error('Erro ao atualizar tarefa:', err);
       setError('Erro ao atualizar tarefa no servidor. Por favor, recarregue a página.');
-      fetchData();
+      fetchData(); // Recarrega para tentar sincronizar com o servidor
     }
   };
 
@@ -154,11 +158,14 @@ export default function GestaoTarefas() {
   };
 
   const handleEditTask = (taskId) => {
+    // Navegar para uma rota de edição ou abrir um modal
     alert(`Função de Editar Tarefa ID: ${taskId} (será implementada)`);
+    // Ex: navigate(`/tarefas/editar/${taskId}`);
   };
 
   const handleAddNewTask = () => {
     alert('Função de Adicionar Nova Tarefa (será implementada)');
+    // Ex: navigate('/tarefas/nova');
   };
 
   if (loading) {
@@ -227,6 +234,7 @@ export default function GestaoTarefas() {
                               </p>
                             )}
 
+                            {/* Mais informações adicionadas aqui */}
                             {tarefa.sub_descricao && (
                               <p className="item-sub-description">
                                 <FaClipboardList /> <span>{tarefa.sub_descricao}</span>

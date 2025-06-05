@@ -1,9 +1,10 @@
+// src/screens/OrcamentoViagem.js
 import React, { useState, useEffect } from 'react';
 import './OrcamentoViagem.css';
 import { FaPlus, FaTrash, FaFilePdf, FaCalculator } from 'react-icons/fa';
 
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import 'jspdf-autotable'; // Garante que o plugin autotable seja carregado
 
 export default function OrcamentoViagem() {
   const [clientes, setClientes] = useState([]);
@@ -15,7 +16,7 @@ export default function OrcamentoViagem() {
     observacoes: '',
   });
   const [itensOrcamento, setItensOrcamento] = useState([
-    { id: Date.now(), descricao: 'Passagem Aérea', valor: '' },
+    { id: Date.now(), descricao: 'Passagem Aérea', valor: '' }, // Usar Date.now() para IDs temporários únicos
     { id: Date.now() + 1, descricao: 'Hospedagem', valor: '' },
   ]);
   const [totalOrcamento, setTotalOrcamento] = useState(0);
@@ -27,7 +28,7 @@ export default function OrcamentoViagem() {
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/clientes`)
+    fetch(`${BACKEND_URL}/clientes`) // Certifique-se que a porta está correta
       .then(res => res.json())
       .then(data => setClientes(data))
       .catch(err => {
@@ -75,7 +76,7 @@ export default function OrcamentoViagem() {
   const handleAddItem = () => {
     setItensOrcamento(prev => [
       ...prev,
-      { id: Date.now(), descricao: '', valor: '' }
+      { id: Date.now(), descricao: '', valor: '' } // Usar Date.now() para ID temporário
     ]);
   };
 
@@ -85,8 +86,9 @@ export default function OrcamentoViagem() {
 
   const formatCurrencyForDisplay = (value) => {
     const valorString = value?.toString() || '0';
-    const semPontosMilhar = valorString.replace(/\./g, '');
-    const comPontoDecimalCorreto = semPontosMilhar.replace(',', '.');
+    // Limpeza para garantir que estamos trabalhando com um número válido antes de formatar
+    const semPontosMilhar = valorString.replace(/\./g, ''); // Remove separadores de milhar
+    const comPontoDecimalCorreto = semPontosMilhar.replace(',', '.'); // Converte vírgula decimal para ponto
     const numValue = parseFloat(comPontoDecimalCorreto) || 0;
 
     return numValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -127,12 +129,12 @@ export default function OrcamentoViagem() {
     }
 
     const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.setTextColor(44, 62, 80);
+    doc.setFontSize(18); // Ajuste no tamanho da fonte do título
+    doc.setTextColor(44, 62, 80); // Cor #2c3e50
     doc.text("Orçamento de Viagem - Viaje Mais Tour", 105, 22, { align: 'center' });
 
     doc.setFontSize(11);
-    doc.setTextColor(52, 73, 94);
+    doc.setTextColor(52, 73, 94); // Cor #34495e
     let currentY = 35;
     doc.text(`Cliente: ${selectedClientName}`, 14, currentY);
     currentY += 7;
@@ -162,33 +164,33 @@ export default function OrcamentoViagem() {
         head: [tableColumn],
         body: tableRows,
         startY: currentY,
-        theme: 'striped',
+        theme: 'striped', // Tema 'striped' ou 'grid'
         headStyles: { fillColor: [11, 61, 145], textColor: [255,255,255], fontStyle: 'bold' },
         styles: { fontSize: 9, cellPadding: 2.5 },
         columnStyles: { 1: { halign: 'right' } },
-        didDrawPage: function (data) {
+        didDrawPage: function (data) { // Adiciona rodapé com número da página
             doc.setFontSize(8);
             doc.setTextColor(150);
             doc.text('Página ' + doc.internal.getNumberOfPages(), data.settings.margin.left, doc.internal.pageSize.height - 10);
         }
     });
 
-    const finalY = doc.autoTable.previous.finalY || currentY;
+    const finalY = doc.autoTable.previous.finalY || currentY; // Garante que finalY tem um valor
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(44, 62, 80);
     doc.text(`TOTAL: R$ ${totalOrcamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 195, finalY + 12, { align: 'right' });
 
-    currentY = finalY + 20;
+    currentY = finalY + 20; // Espaço após o total
 
     if (dados.observacoes) {
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(86, 101, 115);
+        doc.setTextColor(86, 101, 115); // Cor #566573
         doc.text("Observações:", 14, currentY);
         currentY += 5;
-        const splitObservations = doc.splitTextToSize(dados.observacoes, 180);
+        const splitObservations = doc.splitTextToSize(dados.observacoes, 180); // Largura de 180mm
         doc.text(splitObservations, 14, currentY);
     }
     
@@ -211,9 +213,12 @@ export default function OrcamentoViagem() {
 
     if (salvoComSucesso) {
       setMensagem('PDF gerado e orçamento salvo no histórico do cliente com sucesso!');
+      // Limpar formulário opcionalmente
       setDados({ cliente_id: '', destino: '', checkin: '', checkout: '', observacoes: '' });
       setItensOrcamento([{ id: Date.now(), descricao: '', valor: '' }]);
     } else {
+      // A mensagem de erro já foi definida por salvarOrcamentoNoServidor
+      // Apenas garantimos que a mensagem de sucesso não apareça.
       setMensagem('');
     }
   };
@@ -268,7 +273,7 @@ export default function OrcamentoViagem() {
                     required
                   />
                 </div>
-                {itensOrcamento.length > 1 && (
+                {itensOrcamento.length > 1 && ( // Só mostra o botão de remover se houver mais de 1 item
                     <button type="button" onClick={() => handleRemoveItem(item.id)} className="btn-remove-item" title="Remover Item">
                         <FaTrash />
                     </button>
@@ -295,6 +300,7 @@ export default function OrcamentoViagem() {
         </button>
       </div>
 
+      {/* Pré-visualização mantida igual */}
       {selectedClientName && (dados.destino || dados.checkin || dados.checkout || itensOrcamento.some(item => item.descricao || item.valor)) && (
         <div className="orcamento-preview">
           <h3>Pré-visualização do Orçamento</h3>

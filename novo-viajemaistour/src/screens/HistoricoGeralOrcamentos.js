@@ -1,6 +1,7 @@
+// src/screens/HistoricoGeralOrcamentos.js
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaEye, FaArrowCircleRight, FaTrash, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { FaEye, FaArrowCircleRight, FaTrash, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa'; // Importar mais ícones
 import './ClienteDetalhes.css'; // Reutilizando temporariamente, idealmente crie um dedicado
 
 function HistoricoGeralOrcamentos() {
@@ -18,6 +19,7 @@ function HistoricoGeralOrcamentos() {
       setLoading(true);
       setError(null);
       try {
+        // Garantir que o status_orcamento e viagem_id_referencia sejam retornados
         const response = await fetch(`${BACKEND_URL}/orcamentos`);
         if (!response.ok) {
           throw new Error('Falha ao carregar o histórico geral de orçamentos.');
@@ -95,7 +97,7 @@ function HistoricoGeralOrcamentos() {
               <th>Cliente</th>
               <th>Destino</th>
               <th className="text-right">Total (R$)</th>
-              <th>Status</th>
+              <th>Status</th> {/* NOVO: Coluna para status */}
               <th>Observações</th>
               <th>Ações</th>
             </tr>
@@ -121,7 +123,7 @@ function HistoricoGeralOrcamentos() {
                 </td>
                 <td>{orc.destino}</td>
                 <td className="text-right">R$ {parseFloat(orc.total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                <td>
+                <td> {/* NOVO: Célula para status */}
                     <span className={`orcamento-status-tag ${orc.status_orcamento}`}>
                         {orc.status_orcamento === 'convertido' ? <FaCheckCircle /> : <FaExclamationTriangle />}
                         {' '} {orc.status_orcamento === 'convertido' ? 'Convertido' : 'Pendente'}
@@ -146,7 +148,7 @@ function HistoricoGeralOrcamentos() {
                    </button>
                    <button
                       onClick={() => handleConverterParaViagem(orc)}
-                      className={`btn-action-table btn-convert-viagem ${orc.status_orcamento === 'convertido' ? 'disabled' : ''}`}
+                      className={`btn-action-table btn-convert-viagem ${orc.status_orcamento === 'convertido' ? 'disabled' : ''}`} // Desabilitar se já convertido
                       title={orc.status_orcamento === 'convertido' ? 'Já convertido para viagem' : 'Converter Orçamento para Viagem'}
                       disabled={orc.status_orcamento === 'convertido'}>
                      <FaArrowCircleRight />
@@ -175,6 +177,17 @@ function HistoricoGeralOrcamentos() {
             <p><strong>Destino:</strong> {orcamentoDetalhado.destino}</p>
             <p><strong>Data:</strong> {orcamentoDetalhado.data_formatada || new Date(orcamentoDetalhado.data_criacao).toLocaleDateString()}</p>
             <p><strong>Total:</strong> R$ {parseFloat(orcamentoDetalhado.total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p><strong>Status:</strong> <span className={`orcamento-status-tag ${orcamentoDetalhado.status_orcamento}`}>{orcamentoDetalhado.status_orcamento === 'convertido' ? 'Convertido' : 'Pendente'}</span>
+                {orcamentoDetalhado.viagem_id_referencia && (
+                     <span
+                        onClick={() => navigate(`/viagens/editar/${orcamentoDetalhado.viagem_id_referencia}`)}
+                        style={{cursor: 'pointer', color: '#0B3D91', textDecoration: 'underline', marginLeft: '5px'}}
+                        title="Ver detalhes da viagem"
+                    >
+                        (Viagem ID: {orcamentoDetalhado.viagem_id_referencia})
+                    </span>
+                )}
+            </p> {/* NOVO: Exibir status e referência */}
             <h5>Itens:</h5>
             {orcamentoDetalhado.itens && Array.isArray(orcamentoDetalhado.itens) ? (
                 <ul>
@@ -194,5 +207,3 @@ function HistoricoGeralOrcamentos() {
     </div>
   );
 }
-
-export default HistoricoGeralOrcamentos;

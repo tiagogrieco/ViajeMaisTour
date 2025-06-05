@@ -1,4 +1,5 @@
 // src/screens/EditarCliente.js
+// src/screens/EditarCliente.js
 import React, { useEffect, useState } from 'react';
 import './EditarCliente.css';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -36,13 +37,14 @@ function EditarCliente() {
     const fetchClienteData = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${BACKEND_URL}/clientes/${id}`);
+        const res = await fetch(`${BACKEND_URL}/clientes/${id}`); // Certifique-se que a porta está correta
         if (!res.ok) {
           throw new Error('Cliente não encontrado ou erro ao carregar.');
         }
         const data = await res.json();
         const sanitizedData = {};
         for (const key in formData) {
+          // Formatar data_nascimento para YYYY-MM-DD se existir
           if (key === 'data_nascimento' && data[key]) {
             sanitizedData[key] = new Date(data[key]).toISOString().split('T')[0];
           } else {
@@ -58,7 +60,7 @@ function EditarCliente() {
       }
     };
     fetchClienteData();
-  }, [id, BACKEND_URL]); // Adicionado id e BACKEND_URL às dependências
+  }, [id, BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -75,9 +77,10 @@ function EditarCliente() {
       setError('Nome, Email e Telefone são campos obrigatórios.');
       return;
     }
+    // Adicione outras validações como no NovoCliente.js se desejar
 
     try {
-      const res = await fetch(`${BACKEND_URL}/clientes/${id}`, {
+      const res = await fetch(`${BACKEND_URL}/clientes/${id}`, { // Certifique-se que a porta está correta
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -198,7 +201,7 @@ function EditarCliente() {
         </div>
 
         <div className="form-actions">
-          <button type="button" className="btn-secondary" onClick={() => navigate(`/clientes/${id}`)}>
+          <button type="button" className="btn-secondary" onClick={() => navigate(`/clientes/${id}`)}> {/* Voltar para detalhes do cliente */}
             <FaArrowLeft /> Cancelar
           </button>
           <button type="submit" className="btn-primary">
@@ -209,5 +212,3 @@ function EditarCliente() {
     </div>
   );
 }
-
-export default EditarCliente;

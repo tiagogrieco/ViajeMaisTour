@@ -1,3 +1,4 @@
+// src/screens/NovoCliente.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './NovoCliente.css';
@@ -37,24 +38,28 @@ function NovoCliente() {
     setErro('');
     setMensagem('');
 
+    // Validação básica
     if (!formData.nome || !formData.email || !formData.telefone) {
       setErro('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
 
+    // Validação de email (simples)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setErro('Por favor, insira um email válido.');
       return;
     }
 
+    // Validação de telefone (apenas dígitos)
     const telefoneRegex = /^\d+$/;
-    if (formData.telefone && !telefoneRegex.test(formData.telefone)) {
+    if (formData.telefone && !telefoneRegex.test(formData.telefone)) { // Permite telefone vazio, mas se preenchido, só dígitos
       setErro('Por favor, insira um telefone válido (apenas números).');
       return;
     }
 
-    if (formData.cpf && formData.cpf.length !== 11) {
+    // Validação de CPF (muito básica)
+    if (formData.cpf && formData.cpf.length !== 11) { // Permite CPF vazio, mas se preenchido, 11 dígitos
       setErro('Por favor, insira um CPF válido (11 dígitos).');
       return;
     }
@@ -130,5 +135,3 @@ function NovoCliente() {
     </div>
   );
 }
-
-export default NovoCliente;

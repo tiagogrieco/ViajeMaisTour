@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react'; // Adicionado useCallback
+// src/screens/PlanejamentoViagens.js
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './PlanejamentoViagens.css';
-import { FaPlus, FaFilter, FaEdit, FaTrash, FaInfoCircle, FaMoneyBillWave, FaFileAlt, FaUsers } from 'react-icons/fa';
+import { FaPlus, FaFilter, FaEdit, FaTrash, FaInfoCircle, FaMoneyBillWave, FaFileAlt, FaUsers } from 'react-icons/fa'; // Importar FaUsers
 
 function PlanejamentoViagens() {
   const [viagens, setViagens] = useState([]);
@@ -16,7 +17,7 @@ function PlanejamentoViagens() {
   // Define a URL base do backend usando a variável de ambiente
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-  const fetchData = useCallback(async () => { // Envolvido com useCallback
+  const fetchData = async () => {
     try {
       setLoading(true);
       const [viagensRes, clientesRes] = await Promise.all([
@@ -39,11 +40,11 @@ function PlanejamentoViagens() {
     } finally {
       setLoading(false);
     }
-  }, [BACKEND_URL]); // Adicionado BACKEND_URL como dependência do useCallback
+  };
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]); // Removido 'fetchData' da lista de dependências do useEffect, pois agora está em useCallback com suas próprias dependências.
+  }, [BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   const getClienteNome = (cliente_id) => {
     const cliente = clientes.find(c => c.id === cliente_id);
@@ -72,11 +73,12 @@ function PlanejamentoViagens() {
 
   const filteredViagens = viagens.filter(viagem => {
     const nomeClientePrincipal = getClienteNome(viagem.cliente_id);
+    // Combina o nome do cliente principal com os nomes dos participantes para a busca
     const todosNomes = [nomeClientePrincipal, ...(viagem.participantes_detalhes || []).map(p => p.nome)].join(' ').toLowerCase();
 
     const matchesSearch =
       (viagem.destino?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      todosNomes.includes(searchTerm.toLowerCase());
+      todosNomes.includes(searchTerm.toLowerCase()); // NOVO: Busca por nome de participante ou cliente principal
 
     const matchesPagamento = filterStatusPagamento === '' || viagem.pagamento_status === filterStatusPagamento;
     const matchesDocumento = filterStatusDocumento === '' || viagem.documento_status === filterStatusDocumento;
@@ -93,7 +95,11 @@ function PlanejamentoViagens() {
   }
 
   const handleNovaViagemClick = () => {
+    // Idealmente, isso navegaria para um formulário de nova viagem
+    // Por enquanto, vamos manter um alerta, mas o correto seria navigate('/viagens/nova');
     alert('Funcionalidade de Adicionar Nova Viagem será implementada em uma tela dedicada!');
+    // Para simplificar, vou manter o alerta, mas para um fluxo real, seria:
+    // navigate('/viagens/nova'); // Você pode criar um componente `NovaViagem` para isso
   };
   
   const handleEditViagem = (viagemId) => {
@@ -163,12 +169,12 @@ function PlanejamentoViagens() {
                 <span className="viagem-id">ID #{viagem.id}</span>
               </div>
               <div className="card-body">
-                <p><strong>Cliente Principal:</strong> {viagem.nome_cliente}</p>
+                <p><strong>Cliente Principal:</strong> {viagem.nome_cliente}</p> {/* Exibe o nome do cliente principal */}
                 {viagem.participantes_detalhes && viagem.participantes_detalhes.length > 1 && (
                     <p className="participantes-list">
                         <FaUsers style={{ marginRight: '5px' }} />
                         <strong>Participantes:</strong> {viagem.participantes_detalhes
-                            .filter(p => p.id !== viagem.cliente_id)
+                            .filter(p => p.id !== viagem.cliente_id) // Exclui o cliente principal da lista de "outros"
                             .map(p => p.nome).join(', ')}
                     </p>
                 )}
@@ -205,5 +211,3 @@ function PlanejamentoViagens() {
     </div>
   );
 }
-
-export default PlanejamentoViagens;

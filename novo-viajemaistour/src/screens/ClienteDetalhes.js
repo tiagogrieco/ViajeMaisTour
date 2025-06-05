@@ -1,17 +1,18 @@
+// src/screens/ClienteDetalhes.js
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './ClienteDetalhes.css';
-import { FaEdit, FaArrowLeft, FaTrash, FaFilePdf, FaEye, FaArrowCircleRight, FaUsers } from 'react-icons/fa';
+import { FaEdit, FaArrowLeft, FaTrash, FaFilePdf, FaEye, FaArrowCircleRight, FaUsers } from 'react-icons/fa'; // FaUsers importado
 
 export default function ClienteDetalhes() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [cliente, setCliente] = useState(null);
-  const [viagens, setViagens] = useState([]);
+  const [viagens, setViagens] = useState([]); // NOVO: Estado para as viagens do cliente
   const [orcamentos, setOrcamentos] = useState([]);
   const [loadingCliente, setLoadingCliente] = useState(true);
   const [loadingOrcamentos, setLoadingOrcamentos] = useState(true);
-  const [loadingViagens, setLoadingViagens] = useState(true);
+  const [loadingViagens, setLoadingViagens] = useState(true); // NOVO: Estado de loading para viagens
   const [error, setError] = useState(null);
   const [orcamentoDetalhado, setOrcamentoDetalhado] = useState(null);
 
@@ -53,6 +54,7 @@ export default function ClienteDetalhes() {
       }
     };
 
+    // NOVO: Função para buscar viagens do cliente
     const fetchViagensData = async () => {
         setLoadingViagens(true);
         try {
@@ -70,10 +72,11 @@ export default function ClienteDetalhes() {
         }
     };
 
+
     fetchClienteData();
     fetchOrcamentosData();
-    fetchViagensData();
-  }, [id, BACKEND_URL]); // Adicionado id e BACKEND_URL às dependências
+    fetchViagensData(); // NOVO: Chamar a função para buscar viagens
+  }, [id, BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   const handleDeleteCliente = async () => {
     if (!cliente) return;
@@ -110,6 +113,7 @@ export default function ClienteDetalhes() {
     navigate('/viagens/nova-de-orcamento', { state: { orcamentoOrigem: orcamento } });
   };
 
+  // NOVA FUNÇÃO PARA EXCLUIR ORÇAMENTO (idêntica à de HistoricoGeralOrcamentos)
   const handleExcluirOrcamento = async (orcamentoId, destinoOrcamento) => {
     if (window.confirm(`Tem certeza que deseja excluir o orçamento para "${destinoOrcamento}" (ID: ${orcamentoId})? Esta ação é irreversível.`)) {
       try {
@@ -143,7 +147,7 @@ export default function ClienteDetalhes() {
   return (
     <div className="cliente-detalhes-container">
       <h2>Detalhes do Cliente: {cliente.nome}</h2>
-      {error && !loadingOrcamentos && orcamentos.length === 0 && (
+      {error && !loadingOrcamentos && orcamentos.length === 0 && ( // Ajuste na condição de erro
           <p className="error-message mini-error">Aviso: {error.includes("histórico de orçamentos") ? error : ""}</p>
       )}
 
@@ -168,7 +172,7 @@ export default function ClienteDetalhes() {
         {cliente.observacoes && (<div className="info-item full-width"><strong>Observações:</strong><span>{cliente.observacoes}</span></div>)}
       </div>
 
-      <section className="historico-viagens-section">
+      <section className="historico-viagens-section"> {/* NOVO: Seção para histórico de viagens */}
         <h3>Histórico de Viagens</h3>
         {loadingViagens ? (
           <p className="loading-message">Carregando viagens...</p>
@@ -182,7 +186,7 @@ export default function ClienteDetalhes() {
                 <th>Valor</th>
                 <th>Status Pag.</th>
                 <th>Status Docs.</th>
-                <th>Participantes</th>
+                <th>Participantes</th> {/* NOVO: Coluna Participantes */}
                 <th>Ações</th>
               </tr>
             </thead>
@@ -204,6 +208,7 @@ export default function ClienteDetalhes() {
                     <button onClick={() => navigate(`/viagens/editar/${viagem.id}`)} className="btn-action-table btn-view-details" title="Editar Viagem">
                         <FaEdit />
                     </button>
+                    {/* Pode adicionar mais ações aqui, como excluir viagem */}
                   </td>
                 </tr>
               ))}
@@ -249,6 +254,7 @@ export default function ClienteDetalhes() {
                         title="Converter Orçamento para Viagem">
                        <FaArrowCircleRight />
                      </button>
+                    {/* NOVO BOTÃO DE EXCLUIR */}
                     <button
                       onClick={() => handleExcluirOrcamento(orc.id, orc.destino)}
                       className="btn-action-table btn-delete-orcamento"
@@ -275,7 +281,7 @@ export default function ClienteDetalhes() {
             <p><strong>Total:</strong> R$ {parseFloat(orcamentoDetalhado.total).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             <h5>Itens:</h5>
             <ul>
-              {orcamentoDetalhado.itens?.map((item, index) => (
+              {orcamentoDetalhado.itens?.map((item, index) => ( // Adicionado '?' para segurança
                 <li key={index}>{item.descricao}: R$ {parseFloat(item.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</li>
               ))}
             </ul>

@@ -1,6 +1,7 @@
+// src/screens/NovaViagemDeOrcamento.js
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import './NovaViagemDeOrcamento.css';
+import './NovaViagemDeOrcamento.css'; // IMPORTAR O NOVO ARQUIVO CSS
 
 function NovaViagemDeOrcamento() {
   const location = useLocation();
@@ -8,9 +9,9 @@ function NovaViagemDeOrcamento() {
 
   const orcamentoOrigem = location.state?.orcamentoOrigem;
 
-  const [clientes, setClientes] = useState([]);
+  const [clientes, setClientes] = useState([]); // Lista de todos os clientes disponíveis
   const [formData, setFormData] = useState({
-    cliente_id: '',
+    cliente_id: '', // Cliente principal
     destino: '',
     checkin: '',
     checkout: '',
@@ -18,7 +19,7 @@ function NovaViagemDeOrcamento() {
     pagamento_status: 'pendente',
     documento_status: 'pendente',
     observacoes: '',
-    participantes_ids: [],
+    participantes_ids: [], // NOVO: Array para IDs dos participantes adicionais
   });
 
   const [mensagem, setMensagem] = useState('');
@@ -30,6 +31,7 @@ function NovaViagemDeOrcamento() {
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
   useEffect(() => {
+    // Buscar todos os clientes para o select
     fetch(`${BACKEND_URL}/clientes`)
       .then(res => res.json())
       .then(data => setClientes(data))
@@ -47,6 +49,8 @@ function NovaViagemDeOrcamento() {
         checkout: orcamentoOrigem.checkout ? new Date(orcamentoOrigem.checkout).toISOString().split('T')[0] : '',
         valor: parseFloat(orcamentoOrigem.total || 0).toFixed(2),
         observacoes: orcamentoOrigem.observacoes || '',
+        // Ao carregar de um orçamento, o cliente principal é automaticamente um participante.
+        // Outros participantes seriam adicionados manualmente.
         participantes_ids: orcamentoOrigem.cliente_id ? [orcamentoOrigem.cliente_id] : [],
       }));
       setClienteNomeExibicao(orcamentoOrigem.nome_cliente || `Cliente ID: ${orcamentoOrigem.cliente_id}`);
@@ -95,6 +99,7 @@ function NovaViagemDeOrcamento() {
         return;
     }
 
+    // Garante que o cliente principal está sempre na lista de participantes
     const finalParticipantesIds = Array.from(new Set([
         parseInt(formData.cliente_id),
         ...(formData.participantes_ids || []).map(id => parseInt(id))
@@ -102,7 +107,7 @@ function NovaViagemDeOrcamento() {
 
 
     const dadosViagemParaSalvar = {
-      cliente_id: parseInt(formData.cliente_id),
+      cliente_id: parseInt(formData.cliente_id), // Cliente principal
       destino: formData.destino,
       checkin: formData.checkin,
       checkout: formData.checkout,
@@ -111,7 +116,7 @@ function NovaViagemDeOrcamento() {
       documento_status: formData.documento_status,
       observacoes: formData.observacoes,
       orcamento_origem_id: orcamentoOrigem ? orcamentoOrigem.id : null,
-      participantes_ids: finalParticipantesIds,
+      participantes_ids: finalParticipantesIds, // NOVO: Envia a lista de participantes
     };
 
     try {
@@ -124,6 +129,7 @@ function NovaViagemDeOrcamento() {
       if (response.ok) {
         const novaViagem = await response.json();
 
+        // Atualiza o status do orçamento original, se houver
         if (orcamentoOrigem && orcamentoOrigem.id) {
             const updateOrcamentoRes = await fetch(`${BACKEND_URL}/orcamentos/${orcamentoOrigem.id}/status`, {
                 method: 'PUT',
@@ -152,7 +158,7 @@ function NovaViagemDeOrcamento() {
     }
   };
 
-  if (!orcamentoOrigem && !erro && !location.state) {
+  if (!orcamentoOrigem && !erro && !location.state) { // Checagem adicional por location.state
     return <div className="loading-message">Carregando dados do orçamento... Se demorar, verifique se o orçamento foi selecionado corretamente.</div>;
   }
 
@@ -168,6 +174,7 @@ function NovaViagemDeOrcamento() {
       {mensagem && <p className="mensagem-feedback sucesso">{mensagem}</p>}
       {erro && <p className="mensagem-feedback erro">{erro}</p>}
 
+      {/* Só renderiza o formulário se tivermos orcamentoOrigem ou se não houver erro bloqueante */}
       {(orcamentoOrigem || !erro) && (
         <form onSubmit={handleSubmit} className="form-nova-viagem">
           <div className="form-section">
@@ -183,6 +190,7 @@ function NovaViagemDeOrcamento() {
             </div>
           </div>
 
+          {/* NOVO: Seção para adicionar participantes */}
           <div className="form-section">
             <h3 className="form-section-title">Outros Participantes (Opcional)</h3>
             <div className="form-group">
@@ -191,12 +199,12 @@ function NovaViagemDeOrcamento() {
                 name="participantes_ids"
                 id="participantes_ids"
                 multiple
-                value={formData.participantes_ids.map(String)}
+                value={formData.participantes_ids.map(String)} // Valores do select sempre são strings
                 onChange={handleChange}
                 className="select-multiple-participantes"
               >
                 {clientes
-                  .filter(cliente => cliente.id !== parseInt(formData.cliente_id))
+                  .filter(cliente => cliente.id !== parseInt(formData.cliente_id)) // Exclui o cliente principal da lista de seleção
                   .map(cliente => (
                     <option key={cliente.id} value={cliente.id}>
                       {cliente.nome} (ID: {cliente.id})
@@ -227,7 +235,7 @@ function NovaViagemDeOrcamento() {
             <div className="form-group">
               <label htmlFor="valor">Valor Final da Viagem (R$) *</label>
               <input
-                type="text"
+                type="text" // Mudar para text para melhor formatação e validação manual
                 id="valor"
                 name="valor"
                 placeholder="Ex: 1250,75"
@@ -280,5 +288,3 @@ function NovaViagemDeOrcamento() {
     </div>
   );
 }
-
-export default NovaViagemDeOrcamento;

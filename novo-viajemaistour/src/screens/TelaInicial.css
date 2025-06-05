@@ -1,0 +1,326 @@
+/* src/screens/TelaInicial.css */
+
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between; /* Espaça o conteúdo e o rodapé */
+  padding: 40px 20px; /* Mais padding */
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: linear-gradient(to bottom right, #eef2f3, #ffffff); /* Gradiente suave */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+.home-content {
+  flex-grow: 1; /* Permite que o conteúdo ocupe o espaço disponível */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px; /* Limita a largura máxima do conteúdo */
+}
+
+.home-logo {
+  width: 100px; /* Ajuste o tamanho do logo */
+  margin-bottom: 20px;
+  filter: drop-shadow(0 0 5px rgba(0,0,0,0.1)); /* Sombra para o logo */
+}
+
+.home-title {
+  font-size: 2.8rem; /* Título maior */
+  font-weight: 700; /* Mais negrito */
+  color: #0B3D91; /* Cor da marca */
+  margin-bottom: 10px;
+  text-align: center;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+}
+
+.home-subtitle {
+  font-size: 1.3rem;
+  color: #555;
+  margin-bottom: 40px; /* Mais espaço abaixo do subtítulo */
+  text-align: center;
+}
+
+/* Seção de Resumo Rápido */
+.resumo-rapido {
+  width: 100%;
+  margin-bottom: 50px; /* Espaço maior */
+  background-color: #f0f3f6; /* Fundo suave para a seção */
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.resumo-rapido h3 {
+  font-size: 1.6rem;
+  color: #0B3D91;
+  text-align: center;
+  margin-bottom: 25px;
+  border-bottom: 1px dashed #c0c0c0;
+  padding-bottom: 15px;
+}
+
+.cards-resumo-rapido {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Auto-ajuste para cards */
+  gap: 20px;
+  justify-content: center;
+}
+
+/* Estilos para o Card (já definidos em Card.css, mas podemos adicionar variações aqui) */
+/* .cards-resumo-rapido .card { ... } */
+
+
+/* Seções de Botões (Navegação Principal e Ações Rápidas) */
+.home-sections-buttons {
+  width: 100%;
+  margin-bottom: 40px; /* Espaço entre as seções */
+}
+
+.section-title {
+  font-size: 1.5rem;
+  color: #343a40;
+  text-align: center;
+  margin-bottom: 25px;
+  font-weight: 600;
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 3px;
+  background-color: #0B3D91;
+  margin: 10px auto 0;
+  border-radius: 5px;
+}
+
+
+.home-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Ajuste para botões */
+  gap: 25px; /* Espaço entre os botões */
+  justify-content: center;
+  width: 100%;
+}
+
+.icon-button {
+  background: #0B3D91;
+  color: white;
+  border-radius: 18px; /* Mais arredondado */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.15); /* Sombra mais forte */
+  padding: 25px 15px; /* Ajuste o padding */
+  text-align: center; /* Centraliza o texto */
+  text-decoration: none; /* Garante que links não tenham sublinhado */
+}
+
+.icon-button:hover {
+  background: #072e6c; /* Tom mais escuro no hover */
+  transform: translateY(-5px) scale(1.02); /* Levanta e cresce um pouco */
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+
+.icon-button .icon {
+  font-size: 38px; /* Ícones maiores */
+  margin-bottom: 12px;
+  color: #fff; /* Garante que os ícones sejam brancos */
+}
+
+.icon-button span {
+  font-size: 1rem; /* Ajuste o tamanho do texto */
+  line-height: 1.3;
+}
+
+.icon-button.small {
+  padding: 20px 10px; /* Padding menor para botões menores */
+  max-width: 150px; /* Limita largura dos botões pequenos */
+  font-size: 0.9em;
+}
+
+.icon-button.small .icon {
+  font-size: 32px; /* Ícones menores para botões pequenos */
+}
+
+.home-footer {
+  margin-top: 50px;
+  font-size: 0.9rem;
+  color: #888;
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+  width: 100%;
+}
+
+/* Mensagens de loading e erro */
+.loading-message-home, .error-message-home {
+  text-align: center;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 15px;
+  font-size: 1rem;
+}
+
+.loading-message-home {
+  background-color: #e0f2f7;
+  color: #0B3D91;
+}
+
+.error-message-home {
+  background-color: #f8d7da;
+  color: #dc3545;
+  border: 1px solid #f5c6cb;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .home-title {
+    font-size: 2.2rem;
+  }
+  .home-subtitle {
+    font-size: 1.1rem;
+  }
+  .resumo-rapido h3, .section-title {
+    font-size: 1.4rem;
+  }
+  .cards-resumo-rapido {
+    grid-template-columns: 1fr; /* Coluna única em telas menores */
+  }
+  .home-buttons-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+  }
+  .icon-button {
+    padding: 20px 10px;
+    font-size: 0.9rem;
+  }
+  .icon-button .icon {
+    font-size: 32px;
+  }
+  .icon-button.small {
+    max-width: none; /* Remove limitação de largura para small buttons */
+    grid-column: span 1; /* Garante que ocupem 1 coluna */
+  }
+}
+
+@media (max-width: 480px) {
+  .home-container {
+    padding: 20px 15px;
+  }
+  .home-title {
+    font-size: 1.8rem;
+  }
+  .home-logo {
+    width: 80px;
+  }
+  .icon-button .icon {
+    font-size: 28px;
+  }
+  .icon-button span {
+    font-size: 0.85rem;
+  }
+}
+
+/* Adicione ao final do seu TelaInicial.css */
+
+.proximas-viagens-section {
+  width: 100%;
+  margin-bottom: 40px;
+  background-color: #ffffff; /* Fundo branco para destacar */
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.proximas-viagens-section .section-title { /* Reutilizando e ajustando o estilo do section-title */
+  font-size: 1.5rem;
+  color: #0B3D91; /* Cor primária */
+  text-align: left; /* Alinhar à esquerda */
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  /* border-bottom: 2px solid #0B3D91; Removendo a linha inferior se não quiser */
+}
+.proximas-viagens-section .section-title::after {
+  display: none; /* Removendo a linha decorativa debaixo do título, se existir */
+}
+
+.proximas-viagens-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.proxima-viagem-item {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  padding: 15px 20px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  cursor: pointer; /* Indica que é clicável */
+}
+
+.proxima-viagem-item:hover {
+  background-color: #eef2f7;
+  transform: translateY(-2px);
+}
+
+.proxima-viagem-item .destino {
+  font-weight: 600;
+  color: #0B3D91;
+  font-size: 1.1rem;
+  flex-basis: 40%; /* Ajuste a largura conforme necessário */
+}
+
+.proxima-viagem-item .cliente {
+  color: #495057;
+  font-size: 0.9rem;
+  flex-basis: 30%;
+}
+
+.proxima-viagem-item .data {
+  color: #28a745; /* Verde para a data */
+  font-weight: 500;
+  font-size: 0.95rem;
+  flex-basis: 25%;
+  text-align: right;
+}
+
+.no-data-message-home { /* Estilo para mensagem de 'nenhuma viagem' */
+  text-align: center;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 15px;
+  font-size: 1rem;
+  color: #6c757d;
+  background-color: #e9ecef;
+}
+
+/* Ajustes responsivos se necessário */
+@media (max-width: 768px) {
+  .proxima-viagem-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .proxima-viagem-item .destino,
+  .proxima-viagem-item .cliente,
+  .proxima-viagem-item .data {
+    flex-basis: auto;
+    width: 100%;
+    text-align: left;
+  }
+}

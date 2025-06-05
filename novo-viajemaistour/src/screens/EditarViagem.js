@@ -1,13 +1,14 @@
+// src/screens/EditarViagem.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import './EditarViagem.css';
+import './EditarViagem.css'; // Importar o CSS
 import { FaSave, FaArrowLeft } from 'react-icons/fa';
 
 function EditarViagem() {
-  const { id: viagemId } = useParams();
+  const { id: viagemId } = useParams(); // Renomear id para viagemId para clareza
   const navigate = useNavigate();
 
-  const [clientes, setClientes] = useState([]);
+  const [clientes, setClientes] = useState([]); // NOVO: Lista de todos os clientes
   const [formData, setFormData] = useState({
     cliente_id: '',
     destino: '',
@@ -17,7 +18,7 @@ function EditarViagem() {
     pagamento_status: 'pendente',
     documento_status: 'pendente',
     observacoes: '',
-    participantes_ids: [],
+    participantes_ids: [], // NOVO: Array para IDs dos participantes
   });
   const [viagemOriginal, setViagemOriginal] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,7 +36,7 @@ function EditarViagem() {
       try {
         const [viagemRes, clientesRes] = await Promise.all([
           fetch(`${BACKEND_URL}/viagens/${viagemId}`),
-          fetch(`${BACKEND_URL}/clientes`)
+          fetch(`${BACKEND_URL}/clientes`) // Buscar todos os clientes
         ]);
 
         if (!viagemRes.ok) {
@@ -47,7 +48,7 @@ function EditarViagem() {
           throw new Error('Falha ao carregar lista de clientes.');
         }
         const clientesData = await clientesRes.json();
-        setClientes(clientesData);
+        setClientes(clientesData); // Armazena a lista de clientes
 
         setViagemOriginal({
             destino: viagemData.destino,
@@ -55,16 +56,19 @@ function EditarViagem() {
             participantes_detalhes: viagemData.participantes_detalhes || [],
         });
 
+        // Formatar datas para o input type="date" (YYYY-MM-DD)
         const checkinFormatado = viagemData.checkin ? new Date(viagemData.checkin).toISOString().split('T')[0] : '';
         const checkoutFormatado = viagemData.checkout ? new Date(viagemData.checkout).toISOString().split('T')[0] : '';
+        // Formatar valor para exibição (ex: 1250.75)
         const valorFormatado = parseFloat(String(viagemData.valor || '0').replace(',', '.')).toFixed(2);
 
+        // Extrai os IDs dos participantes existentes
         const existingParticipantsIds = viagemData.participantes_detalhes
             ? viagemData.participantes_detalhes.map(p => p.id)
             : [];
 
         setFormData({
-          cliente_id: viagemData.cliente_id.toString(),
+          cliente_id: viagemData.cliente_id.toString(), // Precisa ser string para o select
           destino: viagemData.destino,
           checkin: checkinFormatado,
           checkout: checkoutFormatado,
@@ -72,7 +76,7 @@ function EditarViagem() {
           pagamento_status: viagemData.pagamento_status,
           documento_status: viagemData.documento_status,
           observacoes: viagemData.observacoes || '',
-          participantes_ids: existingParticipantsIds,
+          participantes_ids: existingParticipantsIds, // NOVO: Define os participantes existentes
         });
 
       } catch (err) {
@@ -86,7 +90,7 @@ function EditarViagem() {
     if (viagemId) {
       fetchViagemEClientes();
     }
-  }, [viagemId, BACKEND_URL]); // Adicionado viagemId e BACKEND_URL às dependências
+  }, [viagemId, BACKEND_URL]); // Adicionado BACKEND_URL às dependências
 
   const handleChange = (e) => {
     const { name, value, options } = e.target;
@@ -128,6 +132,7 @@ function EditarViagem() {
         return;
     }
 
+    // Garante que o cliente principal está sempre na lista de participantes
     const finalParticipantesIds = Array.from(new Set([
         parseInt(formData.cliente_id),
         ...(formData.participantes_ids || []).map(id => parseInt(id))
@@ -138,7 +143,7 @@ function EditarViagem() {
       ...formData,
       cliente_id: parseInt(formData.cliente_id),
       valor: valorNumerico.toFixed(2),
-      participantes_ids: finalParticipantesIds,
+      participantes_ids: finalParticipantesIds, // NOVO: Envia a lista de participantes atualizada
     };
 
     try {
@@ -152,7 +157,9 @@ function EditarViagem() {
         const viagemAtualizada = await response.json();
         setMensagem(`Viagem para ${viagemAtualizada.destino} atualizada com sucesso! Redirecionando...`);
         setTimeout(() => {
-          navigate(`/clientes/${viagemAtualizada.cliente_id}`);
+          // Você pode escolher para onde navegar:
+          // navigate('/viagens'); // Para a lista de planejamento
+          navigate(`/clientes/${viagemAtualizada.cliente_id}`); // Para os detalhes do cliente da viagem
         }, 2000);
       } else {
         const errorData = await response.json().catch(() => ({ erro: "Erro desconhecido ao atualizar viagem."}));
@@ -170,7 +177,7 @@ function EditarViagem() {
     return <div className="loading-message-editar-viagem">Carregando dados da viagem para edição...</div>;
   }
 
-  if (erro && !formData.destino) {
+  if (erro && !formData.destino) { // Se houver erro e nenhum dado do formulário carregado
     return <div className="mensagem-feedback erro">{erro}</div>;
   }
 
@@ -189,7 +196,7 @@ function EditarViagem() {
       )}
 
       {mensagem && <p className="mensagem-feedback sucesso">{mensagem}</p>}
-      {erro && !submitting && <p className="mensagem-feedback erro">{erro}</p>}
+      {erro && !submitting && <p className="mensagem-feedback erro">{erro}</p>} {/* Mostra erro apenas se não estiver submetendo para evitar piscar */}
 
       <form onSubmit={handleSubmit} className="form-editar-viagem">
         <div className="form-section">
@@ -209,6 +216,7 @@ function EditarViagem() {
           </div>
         </div>
 
+        {/* NOVO: Seção para adicionar/editar participantes */}
         <div className="form-section">
           <h3 className="form-section-title">Outros Participantes (Opcional)</h3>
           <div className="form-group">
@@ -217,12 +225,12 @@ function EditarViagem() {
               name="participantes_ids"
               id="participantes_ids"
               multiple
-              value={formData.participantes_ids.map(String)}
+              value={formData.participantes_ids.map(String)} // Valores do select sempre são strings
               onChange={handleChange}
               className="select-multiple-participantes"
             >
               {clientes
-                .filter(cliente => cliente.id !== parseInt(formData.cliente_id))
+                .filter(cliente => cliente.id !== parseInt(formData.cliente_id)) // Exclui o cliente principal da lista de seleção
                 .map(cliente => (
                   <option key={cliente.id} value={cliente.id}>
                     {cliente.nome} (ID: {cliente.id})
@@ -252,7 +260,7 @@ function EditarViagem() {
           <div className="form-group">
             <label htmlFor="valor">Valor da Viagem (R$) *</label>
             <input
-              type="text"
+              type="text" // Usar text para melhor formatação e validação no backend/submit
               id="valor"
               name="valor"
               placeholder="Ex: 1250,75"
@@ -303,5 +311,3 @@ function EditarViagem() {
     </div>
   );
 }
-
-export default EditarViagem;
