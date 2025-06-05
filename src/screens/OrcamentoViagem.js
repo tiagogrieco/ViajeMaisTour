@@ -29,12 +29,22 @@ export default function OrcamentoViagem() {
   useEffect(() => {
     fetch(`${BACKEND_URL}/clientes`)
       .then(res => res.json())
-      .then(data => setClientes(data))
+      .then(data => {
+        // --- MODIFICAÇÃO AQUI ---
+        if (Array.isArray(data)) {
+          setClientes(data);
+        } else {
+          console.error('Dados recebidos do backend não são um array:', data);
+          setErro('Dados de clientes inválidos recebidos do servidor.');
+          setClientes([]); // Garante que clientes seja um array vazio em caso de erro
+        }
+      })
       .catch(err => {
         console.error('Erro ao buscar clientes:', err);
-        setErro('Falha ao carregar lista de clientes.');
+        setErro('Falha ao carregar lista de clientes. Verifique a conexão com o backend ou a URL.');
+        setClientes([]); // Garante que clientes seja um array vazio em caso de erro
       });
-  }, [BACKEND_URL]); // Adicionado BACKEND_URL às dependências
+  }, [BACKEND_URL]);
 
   useEffect(() => {
     const cliente = clientes.find(c => c.id === parseInt(dados.cliente_id));
