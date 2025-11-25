@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, DollarSign, Plane, FileText, CheckCircle2 } from 'lucide-react';
+import { Users, DollarSign, Plane, FileText, CheckCircle2, Filter } from 'lucide-react';
 import { useClientes, useCotacoes, useAgenda } from '@/hooks/useQueries';
 import { formatCurrency } from '@/utils/formatters';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useNavigate } from 'react-router-dom';
 import {
   BarChart,
   Bar,
@@ -16,19 +18,18 @@ import {
   Cell,
   Legend
 } from 'recharts';
-import { format, subMonths, isSameMonth } from 'date-fns';
+import { format, subMonths, isSameMonth, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-interface DashboardTabProps {
-  onNavigate: (tab: string) => void;
-}
-
-export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
+export const DashboardTab: React.FC = () => {
+  const navigate = useNavigate();
   const { data: clientesData } = useClientes(1, 1000);
   const clientes = clientesData?.data || [];
 
   const { data: cotacoes = [] } = useCotacoes();
   const { data: agenda = [] } = useAgenda();
+
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
   const stats = useMemo(() => {
     const activeClientes = clientes.filter(c => c.status === 'Ativo').length;
@@ -60,7 +61,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
     };
   }, [clientes, cotacoes, agenda, clientesData]);
 
-  // Data for Bar Chart (Last 6 months sales)
+  // Data for Bar Chart (Last 6 months sales) - Using dataViagem
   const salesData = useMemo(() => {
     const data = [];
     for (let i = 5; i >= 0; i--) {
@@ -68,15 +69,15 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
       const monthName = format(date, 'MMM', { locale: ptBR });
 
       const monthSales = cotacoes
-        .filter(c => (c.status === 'Finalizada' || c.status === 'Aprovada') && isSameMonth(new Date(c.dataCriacao), date))
+        .filter(c => (c.status === 'Finalizada' || c.status === 'Aprovada') && c.dataViagem && isSameMonth(parseISO(c.dataViagem), date))
         .reduce((acc, curr) => acc + (curr.valorTotal || 0), 0);
 
       const monthCommission = cotacoes
-        .filter(c => (c.status === 'Finalizada' || c.status === 'Aprovada') && isSameMonth(new Date(c.dataCriacao), date))
+        .filter(c => (c.status === 'Finalizada' || c.status === 'Aprovada') && c.dataViagem && isSameMonth(parseISO(c.dataViagem), date))
         .reduce((acc, curr) => acc + (curr.comissao || 0), 0);
 
       const monthQuotes = cotacoes
-        .filter(c => isSameMonth(new Date(c.dataCriacao), date))
+        .filter(c => c.dataViagem && isSameMonth(parseISO(c.dataViagem), date))
         .length;
 
       data.push({
@@ -116,6 +117,35 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
       .slice(0, 5);
   }, [agenda]);
 
+  // Filtered Commissions for Table
+  const filteredCommissions = useMemo(() => {
+    let filtered = cotacoes.filter(c => c.status === 'Finalizada' || c.status === 'Aprovada');
+
+    if (selectedMonth !== 'all') {
+      const [year, month] = selectedMonth.split('-');
+      const targetDate = new Date(parseInt(year), parseInt(month) - 1);
+      filtered = filtered.filter(c => c.dataViagem && isSameMonth(parseISO(c.dataViagem), targetDate));
+    }
+
+    return filtered.sort((a, b) => new Date(b.dataViagem || '').getTime() - new Date(a.dataViagem || '').getTime());
+  }, [cotacoes, selectedMonth]);
+
+  const monthlyCommissionTotal = useMemo(() => {
+    return filteredCommissions.reduce((acc, curr) => acc + (curr.comissao || 0), 0);
+  }, [filteredCommissions]);
+
+  // Generate last 12 months for filter
+  const monthOptions = useMemo(() => {
+    const options = [];
+    for (let i = 0; i < 12; i++) {
+      const date = subMonths(new Date(), i);
+      const value = format(date, 'yyyy-MM');
+      const label = format(date, 'MMMM yyyy', { locale: ptBR });
+      options.push({ value, label });
+    }
+    return options;
+  }, []);
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
@@ -127,7 +157,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-blue-500" onClick={() => onNavigate('clientes')}>
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-blue-500" onClick={() => navigate('/clientes')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Clientes Totais</CardTitle>
             <Users className="h-5 w-5 text-blue-600" />
@@ -141,7 +171,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-green-500" onClick={() => onNavigate('cotacoes')}>
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-green-500" onClick={() => navigate('/cotacoes')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Vendas (Total)</CardTitle>
             <DollarSign className="h-5 w-5 text-green-600" />
@@ -154,7 +184,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-amber-500" onClick={() => onNavigate('cotacoes')}>
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-amber-500" onClick={() => navigate('/cotacoes')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Em Negociação</CardTitle>
             <FileText className="h-5 w-5 text-amber-600" />
@@ -167,20 +197,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-purple-500" onClick={() => onNavigate('agenda')}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Viagens Ativas</CardTitle>
-            <Plane className="h-5 w-5 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{stats.activeTrips}</div>
-            <p className="text-xs text-purple-600 mt-1">
-              Confirmadas na agenda
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-indigo-500">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-indigo-500" onClick={() => navigate('/cotacoes')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Comissões (Receita)</CardTitle>
             <DollarSign className="h-5 w-5 text-indigo-600" />
@@ -288,46 +305,65 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
 
         {/* Commission Details Table */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-indigo-600" />
               Detalhamento de Comissões
             </CardTitle>
+            <div className="w-[180px]">
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrar por mês" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os meses</SelectItem>
+                  {monthOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {cotacoes.filter(c => c.status === 'Finalizada' || c.status === 'Aprovada').length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma venda com comissão registrada.</p>
+              {/* Monthly Total Summary */}
+              {selectedMonth !== 'all' && (
+                <div className="bg-indigo-50 p-4 rounded-lg flex justify-between items-center">
+                  <span className="text-sm font-medium text-indigo-800">Total em {monthOptions.find(m => m.value === selectedMonth)?.label}:</span>
+                  <span className="text-lg font-bold text-indigo-600">{formatCurrency(monthlyCommissionTotal)}</span>
+                </div>
+              )}
+
+              {filteredCommissions.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma venda com comissão registrada neste período.</p>
               ) : (
-                <div className="relative overflow-x-auto">
+                <div className="relative overflow-x-auto max-h-[300px] overflow-y-auto scrollbar-hide">
                   <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
                       <tr>
-                        <th className="px-4 py-2">Data</th>
+                        <th className="px-4 py-2">Data Viagem</th>
                         <th className="px-4 py-2">Cliente</th>
                         <th className="px-4 py-2">Venda</th>
                         <th className="px-4 py-2">Comissão</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {cotacoes
-                        .filter(c => c.status === 'Finalizada' || c.status === 'Aprovada')
-                        .sort((a, b) => new Date(b.dataCriacao).getTime() - new Date(a.dataCriacao).getTime())
-                        .slice(0, 5)
-                        .map(quote => {
-                          const cliente = clientes.find(c => c.id === quote.clienteId);
-                          return (
-                            <tr key={quote.id} className="bg-white border-b hover:bg-gray-50">
-                              <td className="px-4 py-2">{format(new Date(quote.dataCriacao), 'dd/MM/yyyy')}</td>
-                              <td className="px-4 py-2 font-medium text-gray-900">{cliente?.nome || 'Cliente não encontrado'}</td>
-                              <td className="px-4 py-2">{formatCurrency(quote.valorTotal)}</td>
-                              <td className="px-4 py-2 text-indigo-600 font-bold">
-                                {formatCurrency(quote.comissao || 0)}
-                                <span className="text-xs text-gray-500 ml-1">({quote.percentualComissao}%)</span>
-                              </td>
-                            </tr>
-                          );
-                        })}
+                      {filteredCommissions.map(quote => {
+                        const cliente = clientes.find(c => c.id === quote.clienteId);
+                        return (
+                          <tr key={quote.id} className="bg-white border-b hover:bg-gray-50">
+                            <td className="px-4 py-2">{quote.dataViagem ? format(parseISO(quote.dataViagem), 'dd/MM/yyyy') : '-'}</td>
+                            <td className="px-4 py-2 font-medium text-gray-900">{cliente?.nome || 'Cliente não encontrado'}</td>
+                            <td className="px-4 py-2">{formatCurrency(quote.valorTotal)}</td>
+                            <td className="px-4 py-2 text-indigo-600 font-bold">
+                              {formatCurrency(quote.comissao || 0)}
+                              <span className="text-xs text-gray-500 ml-1">({quote.percentualComissao}%)</span>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

@@ -40,7 +40,7 @@ const App = () => (
         <Route element={<ProtectedRoute />}>
           <Route element={<LayoutWrapper />}>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<DashboardTab onNavigate={(tab) => window.location.href = `/${tab}`} />} />
+            <Route path="/dashboard" element={<DashboardTab />} />
             <Route path="/agenda" element={<AgendaTab />} />
             <Route path="/clientes" element={<ClientesTab />} />
             <Route path="/dependentes" element={<DependentesTab />} />

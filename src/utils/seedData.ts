@@ -117,16 +117,16 @@ export const seedTestData = async () => {
             }
 
             // 5. Criar Cotação com datas variadas (passado, presente, futuro)
-            // Distribuir: 30% passado, 40% presente/próximo, 30% futuro
+            // Distribuir: 60% passado (histórico), 20% presente/próximo, 20% futuro
             let dataViagem: string;
             let cotacaoStatus: string;
             const rand = Math.random();
 
-            if (rand < 0.3) {
-                // Passado (-60 a -7 dias)
-                dataViagem = generateRelativeDate(-60, -7);
-                cotacaoStatus = getRandomItem(['Finalizada', 'Finalizada', 'Rejeitada']);
-            } else if (rand < 0.7) {
+            if (rand < 0.6) {
+                // Passado (-365 a -7 dias) - Histórico de 1 ano
+                dataViagem = generateRelativeDate(-365, -7);
+                cotacaoStatus = getRandomItem(['Finalizada', 'Finalizada', 'Finalizada', 'Aprovada']); // Maioria finalizada
+            } else if (rand < 0.8) {
                 // Presente/Próximo (-7 a +30 dias)
                 dataViagem = generateRelativeDate(-7, 30);
                 cotacaoStatus = getRandomItem(['Pendente', 'Em Análise', 'Aprovada', 'Finalizada']);
@@ -153,7 +153,6 @@ export const seedTestData = async () => {
             });
 
             // 6. Criar Eventos na Agenda com datas variadas
-            // Distribuir: 20% passado, 30% hoje/próximos dias, 50% futuro
             const eventRand = Math.random();
             let agendaDate: string;
             let agendaStatus: string;
