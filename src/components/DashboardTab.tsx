@@ -71,6 +71,10 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
         .filter(c => (c.status === 'Finalizada' || c.status === 'Aprovada') && isSameMonth(new Date(c.dataCriacao), date))
         .reduce((acc, curr) => acc + (curr.valorTotal || 0), 0);
 
+      const monthCommission = cotacoes
+        .filter(c => (c.status === 'Finalizada' || c.status === 'Aprovada') && isSameMonth(new Date(c.dataCriacao), date))
+        .reduce((acc, curr) => acc + (curr.comissao || 0), 0);
+
       const monthQuotes = cotacoes
         .filter(c => isSameMonth(new Date(c.dataCriacao), date))
         .length;
@@ -78,6 +82,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
       data.push({
         name: monthName,
         vendas: monthSales,
+        comissao: monthCommission,
         cotacoes: monthQuotes
       });
     }
@@ -193,7 +198,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Evolução de Vendas (6 Meses)</CardTitle>
+            <CardTitle>Evolução Financeira (6 Meses)</CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
             <div className="h-[300px]">
@@ -207,6 +212,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
                     cursor={{ fill: 'transparent' }}
                   />
                   <Bar dataKey="vendas" fill="#22c55e" radius={[4, 4, 0, 0]} name="Vendas (R$)" />
+                  <Bar dataKey="comissao" fill="#4f46e5" radius={[4, 4, 0, 0]} name="Comissão (R$)" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

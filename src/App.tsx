@@ -33,7 +33,7 @@ const LayoutWrapper = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
+    <BrowserRouter basename="/sistema">
       <Routes>
         <Route path="/login" element={<LoginPage />} />
 

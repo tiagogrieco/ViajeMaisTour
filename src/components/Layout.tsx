@@ -109,8 +109,8 @@ export function Layout({ onLogout }: LayoutProps) {
                     variant={isActive ? 'default' : 'ghost'}
                     size="sm"
                     className={`flex items-center gap-2 whitespace-nowrap ${isActive
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                        : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                      : 'text-gray-600 hover:text-gray-900'
                       }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -139,13 +139,13 @@ export function Layout({ onLogout }: LayoutProps) {
             <div className="flex flex-col items-center">
               <h3 className="font-semibold text-gray-900 mb-2">CNPJ</h3>
               <a
-                href="/cnpj.png"
+                href={`${import.meta.env.BASE_URL}cnpj.png`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group relative"
               >
                 <img
-                  src="/cnpj.png"
+                  src={`${import.meta.env.BASE_URL}cnpj.png`}
                   alt="Cartão CNPJ"
                   className="max-w-full h-auto max-h-32 object-contain rounded border cursor-pointer hover:shadow-lg transition-shadow"
                 />
@@ -156,7 +156,7 @@ export function Layout({ onLogout }: LayoutProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleDownload('/cnpj.png', 'Cartao_CNPJ_ViajeMaisTour.png')}
+                onClick={() => handleDownload(`${import.meta.env.BASE_URL}cnpj.png`, 'Cartao_CNPJ_ViajeMaisTour.png')}
                 className="mt-2 text-xs"
               >
                 <Download className="w-3 h-3 mr-1" />
@@ -166,13 +166,13 @@ export function Layout({ onLogout }: LayoutProps) {
             <div className="flex flex-col items-center md:items-end">
               <h3 className="font-semibold text-gray-900 mb-2">CADASTUR</h3>
               <a
-                href="/cadastur.png"
+                href={`${import.meta.env.BASE_URL}cadastur.png`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group relative"
               >
                 <img
-                  src="/cadastur.png"
+                  src={`${import.meta.env.BASE_URL}cadastur.png`}
                   alt="Certificado CADASTUR"
                   className="max-w-full h-auto max-h-32 object-contain rounded border cursor-pointer hover:shadow-lg transition-shadow"
                 />
@@ -183,7 +183,7 @@ export function Layout({ onLogout }: LayoutProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleDownload('/cadastur.png', 'Certificado_CADASTUR_ViajeMaisTour.png')}
+                onClick={() => handleDownload(`${import.meta.env.BASE_URL}cadastur.png`, 'Certificado_CADASTUR_ViajeMaisTour.png')}
                 className="mt-2 text-xs"
               >
                 <Download className="w-3 h-3 mr-1" />

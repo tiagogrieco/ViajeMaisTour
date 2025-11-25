@@ -125,16 +125,28 @@ export const seedTestData = async () => {
             comissao: comissao
         });
 
-        // 6. Criar Item na Agenda (para hoje ou futuro próximo)
+        // 6. Criar Itens na Agenda (múltiplos eventos realistas)
         const agendaDate = new Date();
         agendaDate.setDate(agendaDate.getDate() + getRandomInt(0, 7)); // Hoje até +7 dias
 
+        const eventTypes = [
+            { titulo: `Check-in: ${destino}`, descricao: `Check-in do cliente ${clienteNome} para viagem a ${destino}`, status: 'Agendado' },
+            { titulo: `Check-out: ${destino}`, descricao: `Check-out do cliente ${clienteNome} retornando de ${destino}`, status: 'Agendado' },
+            { titulo: `Viagem: ${destino}`, descricao: `Início da viagem de ${clienteNome} para ${destino}`, status: 'Confirmado' },
+            { titulo: `Reunião - Fechamento ${destino}`, descricao: `Reunião para fechar pacote de viagem para ${destino} com ${clienteNome}`, status: 'Pendente' },
+            { titulo: `Atendimento: ${clienteNome}`, descricao: `Atendimento inicial para apresentar opções de viagem`, status: 'Agendado' }
+        ];
+
+        const selectedEvent = getRandomItem(eventTypes);
+
         await supabaseService.agenda.create({
-            titulo: `Reunião com ${clienteNome.split(' ')[0]}`,
-            descricao: `Discutir detalhes da viagem para ${destino}.`,
+            titulo: selectedEvent.titulo,
+            descricao: selectedEvent.descricao,
             data: agendaDate.toISOString().split('T')[0],
             hora: `${getRandomInt(9, 18)}:00`,
-            status: 'Pendente',
+            local: getRandomItem(['Escritório', 'Online - Zoom', 'Online - Meet', 'Aeroporto', '']),
+            cliente: clienteNome,
+            status: selectedEvent.status,
             observacoes: 'Gerado automaticamente.'
         });
 

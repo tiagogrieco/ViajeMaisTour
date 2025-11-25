@@ -58,10 +58,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     const getEventColor = (event: AgendaItem) => {
         const title = event.titulo.toLowerCase();
         if (title.includes('check-in') || title.includes('checkin')) return 'bg-purple-100 text-purple-800 border-purple-200';
+        if (title.includes('check-out') || title.includes('checkout')) return 'bg-orange-100 text-orange-800 border-orange-200';
         if (title.includes('viagem') || title.includes('embarque')) return 'bg-green-100 text-green-800 border-green-200';
-        if (title.includes('retorno') || title.includes('chegada')) return 'bg-orange-100 text-orange-800 border-orange-200';
+        if (title.includes('reunião') || title.includes('reuniao')) return 'bg-blue-100 text-blue-800 border-blue-200';
+        if (title.includes('atendimento')) return 'bg-cyan-100 text-cyan-800 border-cyan-200';
         if (event.status === 'Cancelado') return 'bg-red-100 text-red-800 border-red-200';
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        if (event.status === 'Concluído') return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
     };
 
     const nextMonth = () => onDateChange(addMonths(currentDate, 1));
