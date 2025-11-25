@@ -20,7 +20,7 @@ export interface AuthState {
   isLoading: boolean;
 }
 
-// Login
+
 export async function login(email: string, senha: string): Promise<{ success: boolean; user?: User; error?: string }> {
   try {
     // 1. Authenticate with Supabase Auth
@@ -76,13 +76,13 @@ export async function login(email: string, senha: string): Promise<{ success: bo
   }
 }
 
-// Logout
+
 export async function logout(): Promise<void> {
   await supabase.auth.signOut();
   localStorage.removeItem('auth_user');
 }
 
-// Obter usuário atual
+
 // NOTE: This is still synchronous and relies on localStorage for compatibility.
 // It should be refactored to use an async AuthContext.
 export function getCurrentUser(): User | null {
@@ -96,13 +96,13 @@ export function getCurrentUser(): User | null {
   }
 }
 
-// Verificar se é admin
+
 export function isAdmin(): boolean {
   const user = getCurrentUser();
   return user?.tipo === 'Admin';
 }
 
-// Criar novo usuário (apenas Admin)
+
 // Now creates in Supabase Auth AND Profile table
 export async function createUser(userData: {
   nome: string;
@@ -197,7 +197,7 @@ export async function createUser(userData: {
   }
 }
 
-// Listar todos os usuários
+
 export async function listUsers(): Promise<User[]> {
   try {
     const { data, error } = await supabase
@@ -225,7 +225,7 @@ export async function listUsers(): Promise<User[]> {
   }
 }
 
-// Atualizar usuário
+
 export async function updateUser(
   userId: string,
   updates: Partial<{
@@ -268,7 +268,7 @@ export async function updateUser(
   }
 }
 
-// Deletar usuário
+
 export async function deleteUser(userId: string): Promise<{ success: boolean; error?: string }> {
   try {
     if (!isAdmin()) {

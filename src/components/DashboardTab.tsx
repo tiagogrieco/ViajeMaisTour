@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Plane, Package, FileText, Calendar, TrendingUp, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { Users, Plane, Package, FileText, Calendar, TrendingUp, AlertCircle, CheckCircle2, Clock, Trash2 } from 'lucide-react';
 import { Cliente, Produto, Cotacao, AgendaItem } from '@/types';
 import { formatDate, formatTime } from '@/utils/formatters';
 
@@ -205,6 +205,39 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
             >
               <TrendingUp className="h-6 w-6" />
               <span className="text-sm">Relatórios</span>
+            </Button>
+
+            {/* Botão de Teste (Apenas para desenvolvimento/demo) */}
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex flex-col items-center gap-2 border-dashed border-amber-400 bg-amber-50 hover:bg-amber-100"
+              onClick={() => {
+                if (confirm('Isso irá criar dados fictícios no banco de dados. Deseja continuar?')) {
+                  import('@/utils/seedData').then(m => m.seedTestData());
+                }
+              }}
+            >
+              <Package className="h-6 w-6 text-amber-600" />
+              <span className="text-sm text-amber-700">Gerar Testes</span>
+            </Button>
+
+            {/* Botão de Limpeza (PERIGO) */}
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex flex-col items-center gap-2 border-dashed border-red-400 bg-red-50 hover:bg-red-100"
+              onClick={() => {
+                const password = prompt('Digite a senha de administrador para APAGAR TUDO:');
+                if (password === 'admin123') {
+                  if (confirm('TEM CERTEZA? Isso apagará TODOS os clientes, vendas e produtos. Não há volta.')) {
+                    import('@/utils/clearData').then(m => m.clearDatabase());
+                  }
+                } else if (password !== null) {
+                  alert('Senha incorreta.');
+                }
+              }}
+            >
+              <Trash2 className="h-6 w-6 text-red-600" />
+              <span className="text-sm text-red-700">Resetar Banco</span>
             </Button>
           </div>
         </CardContent>

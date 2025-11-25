@@ -7,21 +7,21 @@ const mapClienteFromDB = (db: any): Cliente => ({
   nome: db.nome,
   email: db.email,
   telefone: db.telefone,
-  cpf: db.cpf || '', // FIXED: db.cpf instead of db.cpf_cnpj
+  cpf: db.cpf || '',
   dataNascimento: db.data_nascimento || '',
   endereco: db.endereco || '',
-  cidade: db.cidade || '', 
-  estado: db.estado || '', 
-  cep: db.cep || '', 
-  status: db.status || 'Ativo', 
-  observacoes: db.observacoes || '', 
+  cidade: db.cidade || '',
+  estado: db.estado || '',
+  cep: db.cep || '',
+  status: db.status || 'Ativo',
+  observacoes: db.observacoes || '',
   dataCriacao: db.data_criacao
 });
 
 const mapClienteToDB = (app: Partial<Cliente>) => {
   return {
     nome: app.nome,
-    cpf: app.cpf, // FIXED: cpf instead of cpf_cnpj
+    cpf: app.cpf,
     email: app.email,
     telefone: app.telefone,
     data_nascimento: app.dataNascimento || null,
@@ -39,10 +39,10 @@ const mapDependenteFromDB = (db: any): Dependente => ({
   id: db.id,
   clienteId: db.cliente_id,
   nome: db.nome,
-  cpf: db.cpf || '', 
+  cpf: db.cpf || '',
   dataNascimento: db.data_nascimento || '',
   parentesco: db.parentesco || '',
-  observacoes: db.observacoes || '', 
+  observacoes: db.observacoes || '',
   dataCriacao: db.data_criacao
 });
 
@@ -61,23 +61,23 @@ const mapDependenteToDB = (app: Partial<Dependente>) => {
 const mapFornecedorFromDB = (db: any): Fornecedor => ({
   id: db.id,
   nome: db.nome_fantasia,
-  tipo: db.tipo as any, // FIXED: db.tipo instead of db.categoria
+  tipo: db.tipo as any,
   contato: db.contato || db.razao_social || '',
   telefone: db.telefone || '',
   email: db.email || '',
   cnpj: db.cnpj || '',
-  endereco: db.endereco || '', 
-  cidade: db.cidade || '', 
-  estado: db.estado || '', 
-  cep: db.cep || '', 
-  observacoes: db.observacoes || '', 
+  endereco: db.endereco || '',
+  cidade: db.cidade || '',
+  estado: db.estado || '',
+  cep: db.cep || '',
+  observacoes: db.observacoes || '',
   dataCriacao: db.data_criacao
 });
 
 const mapFornecedorToDB = (app: Partial<Fornecedor>) => {
   return {
     nome_fantasia: app.nome,
-    tipo: app.tipo, // FIXED: tipo instead of categoria
+    tipo: app.tipo,
     contato: app.contato,
     razao_social: app.contato, // Backup
     cnpj: app.cnpj,
@@ -106,7 +106,7 @@ const mapProdutoFromDB = (db: any): Produto => ({
 const mapProdutoToDB = (app: Partial<Produto>) => {
   return {
     nome: app.nome,
-    fornecedor_id: app.fornecedorId && app.fornecedorId.trim() !== '' ? app.fornecedorId : null, // FIXED: null instead of empty string
+    fornecedor_id: app.fornecedorId && app.fornecedorId.trim() !== '' ? app.fornecedorId : null,
     tipo: app.categoria,
     valor_venda: app.preco,
     descricao: app.descricao,
@@ -118,11 +118,11 @@ const mapProdutoToDB = (app: Partial<Produto>) => {
 const mapCotacaoFromDB = (db: any): Cotacao => ({
   id: db.id,
   clienteId: db.cliente_id,
-  produtoId: '', 
-  produtos: [], 
-  dataViagem: db.data_viagem || db.data_cotacao || '', 
-  dataRetorno: db.data_retorno || '', 
-  numeroPassageiros: db.numero_passageiros || 1, 
+  produtoId: '',
+  produtos: [],
+  dataViagem: db.data_viagem || db.data_cotacao || '',
+  dataRetorno: db.data_retorno || '',
+  numeroPassageiros: db.numero_passageiros || 1,
   valorTotal: db.valor_total || 0,
   status: db.status as any,
   observacoes: db.observacoes || '',
@@ -146,7 +146,7 @@ const mapCotacaoToDB = (app: Partial<Cotacao>) => {
 const mapAgendaFromDB = (db: any): AgendaItem => {
   let data = '';
   let hora = '';
-  
+
   if (db.data_inicio) {
     const start = new Date(db.data_inicio);
     data = start.toISOString().split('T')[0];
@@ -159,7 +159,7 @@ const mapAgendaFromDB = (db: any): AgendaItem => {
     descricao: db.descricao || '',
     data: data,
     hora: hora,
-    cliente: '', 
+    cliente: '',
     status: db.status as any,
     observacoes: db.observacoes || '',
     dataCriacao: db.data_criacao
@@ -173,7 +173,7 @@ const mapAgendaToDB = (app: Partial<AgendaItem>) => {
   } else if (app.data) {
     data_inicio = `${app.data}T00:00:00`;
   }
-  
+
   return {
     titulo: app.titulo,
     descricao: app.descricao,
