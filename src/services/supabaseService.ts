@@ -185,10 +185,31 @@ const mapAgendaToDB = (app: Partial<AgendaItem>) => {
 
 export const supabaseService = {
   clientes: {
-    list: async () => {
-      const { data, error } = await supabase.from('clientes').select('*').order('nome');
-      if (error) { console.error('Error fetching clientes:', error); return []; }
-      return data?.map(mapClienteFromDB) || [];
+    list: async (page = 1, limit = 10, search = '', status = 'all') => {
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+
+      let query = supabase
+        .from('clientes')
+        .select('*', { count: 'exact' })
+        .order('nome')
+        .range(from, to);
+
+      if (search) {
+        query = query.or(`nome.ilike.%${search}%,email.ilike.%${search}%,cpf.ilike.%${search}%`);
+      }
+
+      if (status && status !== 'all') {
+        query = query.eq('status', status);
+      }
+
+      const { data, error, count } = await query;
+
+      if (error) { console.error('Error fetching clientes:', error); return { data: [], count: 0 }; }
+      return {
+        data: data?.map(mapClienteFromDB) || [],
+        count: count || 0
+      };
     },
     create: async (item: any) => {
       const payload = mapClienteToDB(item);

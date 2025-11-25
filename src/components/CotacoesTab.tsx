@@ -18,7 +18,8 @@ import { useCotacoes, useCotacaoMutations, useClientes, useProdutos } from '@/ho
 
 export const CotacoesTab: React.FC = () => {
   const { data: cotacoes = [], isLoading: isLoadingCotacoes } = useCotacoes();
-  const { data: clientes = [] } = useClientes();
+  const { data: clientesData } = useClientes(1, 1000);
+  const clientes = clientesData?.data || [];
   const { data: produtos = [] } = useProdutos();
   const { create: createCotacao, update: updateCotacao, remove: removeCotacao } = useCotacaoMutations();
   const [searchTerm, setSearchTerm] = useState('');

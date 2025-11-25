@@ -6,20 +6,38 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Edit, Plus, Search, Mail, Phone, MapPin, User, Loader2, AlertCircle } from 'lucide-react';
+import { Trash2, Edit, Plus, Search, Mail, Phone, MapPin, User, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Cliente } from '@/types';
 import { FormattedInput } from './FormattedInput';
 import { formatDate } from '@/utils/formatters';
-import { supabaseService } from '@/services/supabaseService';
 import { toast } from 'sonner';
 
 import { useClientes, useClienteMutations } from '@/hooks/useQueries';
 
 export const ClientesTab: React.FC = () => {
-  const { data: clientes = [], isLoading: isLoadingClientes } = useClientes();
-  const { create: createCliente, update: updateCliente, remove: removeCliente } = useClienteMutations();
+  const [page, setPage] = useState(1);
+  const limit = 10;
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  // Reset page when filters change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setPage(1);
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatusFilter(value);
+    setPage(1);
+  };
+
+  const { data: clientesData, isLoading: isLoadingClientes } = useClientes(page, limit, searchTerm, statusFilter);
+  const clientes = clientesData?.data || [];
+  const totalCount = clientesData?.count || 0;
+  const totalPages = Math.ceil(totalCount / limit);
+
+  const { create: createCliente, update: updateCliente, remove: removeCliente } = useClienteMutations();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,15 +53,6 @@ export const ClientesTab: React.FC = () => {
     cep: '',
     status: 'Ativo',
     observacoes: ''
-  });
-
-  const filteredClientes = clientes.filter(cliente => {
-    const matchesSearch = cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.telefone.includes(searchTerm) ||
-      cliente.cpf.includes(searchTerm);
-    const matchesStatus = statusFilter === 'all' || cliente.status === statusFilter;
-    return matchesSearch && matchesStatus;
   });
 
   const validateForm = () => {
@@ -97,8 +106,6 @@ export const ClientesTab: React.FC = () => {
     if (!validateForm()) {
       return;
     }
-
-    // setIsLoading(true); // Handled by mutation status if needed, or local state
 
     try {
       if (editingCliente) {
@@ -159,11 +166,11 @@ export const ClientesTab: React.FC = () => {
             <Input
               placeholder="Buscar por nome, email, telefone ou CPF..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className="pl-10"
             />
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={statusFilter} onValueChange={handleStatusChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filtrar por status" />
             </SelectTrigger>
@@ -322,33 +329,28 @@ export const ClientesTab: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Total de Clientes</p>
-                <p className="text-2xl font-bold text-gray-900">{clientes.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{totalCount}</p>
               </div>
               <User className="h-8 w-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
+        {/* Note: "Clientes Ativos" count is hard to get accurately without a separate query if we are filtering. 
+            For now, we can remove it or just show "N/A" if filtered, or keep it if we fetch stats separately.
+            Let's keep it simple and remove the specific "Active" count card if it's too complex, 
+            or just show totalCount if statusFilter is 'Ativo'.
+            Actually, let's just show the total count of the current filter.
+        */}
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Clientes Ativos</p>
+                <p className="text-sm text-gray-600">Página Atual</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {clientes.filter(c => c.status === 'Ativo').length}
+                  {page} / {totalPages || 1}
                 </p>
               </div>
               <User className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Resultados da Busca</p>
-                <p className="text-2xl font-bold text-purple-600">{filteredClientes.length}</p>
-              </div>
-              <Search className="h-8 w-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
@@ -360,7 +362,7 @@ export const ClientesTab: React.FC = () => {
           <div className="flex items-center justify-center h-48">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           </div>
-        ) : filteredClientes.length === 0 ? (
+        ) : clientes.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <User className="h-12 w-12 text-gray-400 mb-4" />
@@ -372,68 +374,97 @@ export const ClientesTab: React.FC = () => {
             </CardContent>
           </Card>
         ) : (
-          filteredClientes.map((cliente) => (
-            <Card key={cliente.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2 flex-1">
-                    <div className="flex items-center gap-3">
-                      <CardTitle className="text-xl">{cliente.nome}</CardTitle>
-                      <Badge variant={cliente.status === 'Ativo' ? 'default' : 'secondary'}>
-                        {cliente.status}
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        {cliente.email}
+          <>
+            {clientes.map((cliente) => (
+              <Card key={cliente.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-3">
+                        <CardTitle className="text-xl">{cliente.nome}</CardTitle>
+                        <Badge variant={cliente.status === 'Ativo' ? 'default' : 'secondary'}>
+                          {cliente.status}
+                        </Badge>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        {cliente.telefone}
-                      </div>
-                      {cliente.cidade && cliente.estado && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4" />
-                          {cliente.cidade}, {cliente.estado}
+                          <Mail className="h-4 w-4" />
+                          {cliente.email}
                         </div>
-                      )}
-                      <div className="text-xs">
-                        Cadastrado em {formatDate(cliente.dataCriacao)}
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          {cliente.telefone}
+                        </div>
+                        {cliente.cidade && cliente.estado && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4" />
+                            {cliente.cidade}, {cliente.estado}
+                          </div>
+                        )}
+                        <div className="text-xs">
+                          Cadastrado em {formatDate(cliente.dataCriacao)}
+                        </div>
                       </div>
                     </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEdit(cliente)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDelete(cliente.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Excluir
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEdit(cliente)}
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Editar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDelete(cliente.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Excluir
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              {cliente.observacoes && (
-                <CardContent className="pt-0">
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <strong className="text-sm">Observações:</strong>
-                    <p className="text-sm text-muted-foreground mt-1">{cliente.observacoes}</p>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-          ))
+                </CardHeader>
+                {cliente.observacoes && (
+                  <CardContent className="pt-0">
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <strong className="text-sm">Observações:</strong>
+                      <p className="text-sm text-muted-foreground mt-1">{cliente.observacoes}</p>
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            ))}
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between pt-4">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {clientes.length} de {totalCount} registros
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1 || isLoadingClientes}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages || isLoadingClientes}
+                >
+                  Próximo
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

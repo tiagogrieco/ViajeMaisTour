@@ -4,7 +4,8 @@ import { BarChart3, TrendingUp, Users, Package } from 'lucide-react';
 import { useClientes, useProdutos, useCotacoes } from '@/hooks/useQueries';
 
 export function RelatoriosTab() {
-  const { data: clientes = [] } = useClientes();
+  const { data: clientesData } = useClientes(1, 1000);
+  const clientes = clientesData?.data || [];
   const { data: produtos = [] } = useProdutos();
   const { data: cotacoes = [] } = useCotacoes();
 

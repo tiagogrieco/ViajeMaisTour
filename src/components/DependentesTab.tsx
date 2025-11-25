@@ -17,7 +17,8 @@ import { useDependentes, useDependenteMutations, useClientes } from '@/hooks/use
 
 export const DependentesTab: React.FC = () => {
   const { data: dependentes = [], isLoading: isLoadingDependentes } = useDependentes();
-  const { data: clientes = [] } = useClientes();
+  const { data: clientesData } = useClientes(1, 1000);
+  const clientes = clientesData?.data || [];
   const { create: createDependente, update: updateDependente, remove: removeDependente } = useDependenteMutations();
   const [searchTerm, setSearchTerm] = useState('');
   const [clienteFilter, setClienteFilter] = useState<string>('all');

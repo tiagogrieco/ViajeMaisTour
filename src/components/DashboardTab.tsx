@@ -13,7 +13,8 @@ interface DashboardTabProps {
 }
 
 export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
-  const { data: clientes = [] } = useClientes();
+  const { data: clientesData } = useClientes(1, 1000);
+  const clientes = clientesData?.data || [];
   const { data: produtos = [] } = useProdutos();
   const { data: cotacoes = [] } = useCotacoes();
   const { data: agenda = [] } = useAgenda();
@@ -116,7 +117,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
             <Users className="h-5 w-5 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{stats.totalClientes}</div>
+            <div className="text-3xl font-bold text-gray-900">{clientesData?.count || 0}</div>
             <p className="text-xs text-green-600 mt-1">
               {stats.activeClientes} ativos
             </p>

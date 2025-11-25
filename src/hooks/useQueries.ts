@@ -1,13 +1,14 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabaseService } from '@/services/supabaseService';
 import { Cliente, Dependente, Fornecedor, Produto, Cotacao, AgendaItem } from '@/types';
 import { toast } from 'sonner';
 
 // --- CLIENTES ---
-export function useClientes() {
+export function useClientes(page = 1, limit = 10, search = '', status = 'all') {
     return useQuery({
-        queryKey: ['clientes'],
-        queryFn: supabaseService.clientes.list,
+        queryKey: ['clientes', page, limit, search, status],
+        queryFn: () => supabaseService.clientes.list(page, limit, search, status),
+        placeholderData: keepPreviousData,
     });
 }
 
