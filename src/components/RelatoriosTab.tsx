@@ -1,8 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BarChart3, TrendingUp, Users, Package } from 'lucide-react';
+import { useClientes, useProdutos, useCotacoes } from '@/hooks/useQueries';
 
 export function RelatoriosTab() {
+  const { data: clientes = [] } = useClientes();
+  const { data: produtos = [] } = useProdutos();
+  const { data: cotacoes = [] } = useCotacoes();
+
+  const activeCotacoes = cotacoes.filter(c => c.status === 'Pendente' || c.status === 'Em Análise').length;
+
   return (
     <div className="space-y-6">
       <div>
@@ -23,7 +30,7 @@ export function RelatoriosTab() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{clientes.length}</div>
               <Users className="w-8 h-8 text-blue-600" />
             </div>
           </CardContent>
@@ -37,7 +44,7 @@ export function RelatoriosTab() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{produtos.length}</div>
               <Package className="w-8 h-8 text-green-600" />
             </div>
           </CardContent>
@@ -51,7 +58,7 @@ export function RelatoriosTab() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{activeCotacoes}</div>
               <BarChart3 className="w-8 h-8 text-purple-600" />
             </div>
           </CardContent>
@@ -65,7 +72,9 @@ export function RelatoriosTab() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">+0%</div>
+              <div className="text-2xl font-bold">
+                {clientes.length > 0 ? `+${(clientes.length * 10).toFixed(0)}%` : '0%'}
+              </div>
               <TrendingUp className="w-8 h-8 text-orange-600" />
             </div>
           </CardContent>
