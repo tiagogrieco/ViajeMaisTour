@@ -244,9 +244,41 @@ export const CotacoesTab: React.FC = () => {
                   label="Valor Total"
                   type="number"
                   value={formData.valorTotal?.toString() || '0'}
-                  onChange={(value) => setFormData(prev => ({ ...prev, valorTotal: parseFloat(value) || 0 }))}
+                  onChange={(value) => {
+                    const total = parseFloat(value) || 0;
+                    const percentual = formData.percentualComissao || 0;
+                    const comissao = (total * percentual) / 100;
+                    setFormData(prev => ({ ...prev, valorTotal: total, comissao }));
+                  }}
                   required
                 />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormattedInput
+                    label="Comissão (%)"
+                    type="number"
+                    value={formData.percentualComissao?.toString() || '0'}
+                    onChange={(value) => {
+                      const percentual = parseFloat(value) || 0;
+                      const total = formData.valorTotal || 0;
+                      const comissao = (total * percentual) / 100;
+                      setFormData(prev => ({ ...prev, percentualComissao: percentual, comissao }));
+                    }}
+                    placeholder="Ex: 10"
+                  />
+                  <FormattedInput
+                    label="Comissão (R$)"
+                    type="number"
+                    value={formData.comissao?.toString() || '0'}
+                    onChange={(value) => {
+                      const comissao = parseFloat(value) || 0;
+                      const total = formData.valorTotal || 0;
+                      const percentual = total > 0 ? (comissao / total) * 100 : 0;
+                      setFormData(prev => ({ ...prev, comissao, percentualComissao: parseFloat(percentual.toFixed(2)) }));
+                    }}
+                    placeholder="Ex: 150.00"
+                  />
+                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>

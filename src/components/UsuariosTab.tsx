@@ -8,7 +8,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { createUser, listUsers, updateUser, deleteUser, isAdmin, type User } from '@/lib/auth';
-import { UserPlus, Edit, Trash2, Shield, User as UserIcon, Mail, Phone, Briefcase, Calendar, Search } from 'lucide-react';
+import { UserPlus, Edit, Trash2, Shield, User as UserIcon, Mail, Phone, Briefcase, Calendar, Search, Database, Trash } from 'lucide-react';
+import { seedTestData } from '@/utils/seedData';
+import { clearDatabase } from '@/utils/clearData';
 
 export default function UsuariosTab() {
   const [usuarios, setUsuarios] = useState<User[]>([]);
@@ -83,7 +85,7 @@ export default function UsuariosTab() {
         }
 
         const result = await updateUser(editingUser.id, updates);
-        
+
         if (result.success) {
           toast.success('Usuário atualizado com sucesso!');
           resetForm();
@@ -93,7 +95,7 @@ export default function UsuariosTab() {
         }
       } else {
         const result = await createUser(formData);
-        
+
         if (result.success) {
           toast.success('Usuário criado com sucesso!');
           resetForm();
@@ -126,7 +128,7 @@ export default function UsuariosTab() {
     if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
 
     const result = await deleteUser(userId);
-    
+
     if (result.success) {
       toast.success('Usuário excluído com sucesso!');
       loadUsuarios();
@@ -177,123 +179,151 @@ export default function UsuariosTab() {
           </p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm} className="bg-gradient-to-r from-blue-600 to-purple-600">
-              <UserPlus className="mr-2 h-4 w-4" />
-              Novo Usuário
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
-              </DialogTitle>
-              <DialogDescription>
-                {editingUser
-                  ? 'Atualize as informações do usuário'
-                  : 'Preencha os dados para criar um novo usuário'}
-              </DialogDescription>
-            </DialogHeader>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (confirm('Isso irá gerar dados aleatórios no banco. Deseja continuar?')) {
+                seedTestData();
+              }
+            }}
+            className="border-blue-200 hover:bg-blue-50 text-blue-700"
+          >
+            <Database className="mr-2 h-4 w-4" />
+            Gerar Dados
+          </Button>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nome">Nome *</Label>
-                  <Input
-                    id="nome"
-                    value={formData.nome}
-                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                    placeholder="Nome completo"
-                  />
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (confirm('ATENÇÃO: Isso apagará TODOS os dados do banco (exceto usuários). Deseja continuar?')) {
+                clearDatabase();
+              }
+            }}
+            className="border-red-200 hover:bg-red-50 text-red-700"
+          >
+            <Trash className="mr-2 h-4 w-4" />
+            Limpar Banco
+          </Button>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={resetForm} className="bg-gradient-to-r from-blue-600 to-purple-600">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Novo Usuário
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingUser
+                    ? 'Atualize as informações do usuário'
+                    : 'Preencha os dados para criar um novo usuário'}
+                </DialogDescription>
+              </DialogHeader>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nome">Nome *</Label>
+                    <Input
+                      id="nome"
+                      value={formData.nome}
+                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                      placeholder="Nome completo"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="email@exemplo.com"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="senha">
+                      Senha {editingUser ? '(deixe em branco para não alterar)' : '*'}
+                    </Label>
+                    <Input
+                      id="senha"
+                      type="password"
+                      value={formData.senha}
+                      onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
+                      placeholder="••••••••"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tipo">Tipo de Usuário *</Label>
+                    <Select
+                      value={formData.tipo}
+                      onValueChange={(value: 'Admin' | 'Usuario') =>
+                        setFormData({ ...formData, tipo: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Admin">Administrador</SelectItem>
+                        <SelectItem value="Usuario">Usuário</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="telefone">Telefone</Label>
+                    <Input
+                      id="telefone"
+                      value={formData.telefone}
+                      onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="cargo">Cargo</Label>
+                    <Input
+                      id="cargo"
+                      value={formData.cargo}
+                      onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
+                      placeholder="Ex: Atendente, Vendedor"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="data_contratacao">Data de Contratação</Label>
+                    <Input
+                      id="data_contratacao"
+                      type="date"
+                      value={formData.data_contratacao}
+                      onChange={(e) =>
+                        setFormData({ ...formData, data_contratacao: e.target.value })
+                      }
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="email@exemplo.com"
-                  />
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button type="button" variant="outline" onClick={resetForm}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" className="bg-gradient-to-r from-blue-600 to-purple-600">
+                    {editingUser ? 'Atualizar' : 'Criar'} Usuário
+                  </Button>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="senha">
-                    Senha {editingUser ? '(deixe em branco para não alterar)' : '*'}
-                  </Label>
-                  <Input
-                    id="senha"
-                    type="password"
-                    value={formData.senha}
-                    onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                    placeholder="••••••••"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="tipo">Tipo de Usuário *</Label>
-                  <Select
-                    value={formData.tipo}
-                    onValueChange={(value: 'Admin' | 'Usuario') =>
-                      setFormData({ ...formData, tipo: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Admin">Administrador</SelectItem>
-                      <SelectItem value="Usuario">Usuário</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="telefone">Telefone</Label>
-                  <Input
-                    id="telefone"
-                    value={formData.telefone}
-                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                    placeholder="(00) 00000-0000"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cargo">Cargo</Label>
-                  <Input
-                    id="cargo"
-                    value={formData.cargo}
-                    onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
-                    placeholder="Ex: Atendente, Vendedor"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="data_contratacao">Data de Contratação</Label>
-                  <Input
-                    id="data_contratacao"
-                    type="date"
-                    value={formData.data_contratacao}
-                    onChange={(e) =>
-                      setFormData({ ...formData, data_contratacao: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  Cancelar
-                </Button>
-                <Button type="submit" className="bg-gradient-to-r from-blue-600 to-purple-600">
-                  {editingUser ? 'Atualizar' : 'Criar'} Usuário
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Search */}

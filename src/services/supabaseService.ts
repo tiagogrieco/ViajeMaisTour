@@ -126,6 +126,8 @@ const mapCotacaoFromDB = (db: any): Cotacao => ({
   valorTotal: db.valor_total || 0,
   status: db.status as any,
   observacoes: db.observacoes || '',
+  percentualComissao: db.percentualComissao || db.percentual_comissao || 0,
+  comissao: db.comissao || 0,
   dataCriacao: db.data_criacao
 });
 
@@ -138,7 +140,9 @@ const mapCotacaoToDB = (app: Partial<Cotacao>) => {
     numero_passageiros: app.numeroPassageiros,
     status: app.status,
     valor_total: app.valorTotal,
-    observacoes: app.observacoes
+    observacoes: app.observacoes,
+    percentualComissao: app.percentualComissao,
+    comissao: app.comissao
   };
 };
 

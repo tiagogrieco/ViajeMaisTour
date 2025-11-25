@@ -1,12 +1,23 @@
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Users, Plane, Package, FileText, Calendar, TrendingUp, AlertCircle, CheckCircle2, Clock, Trash2 } from 'lucide-react';
-import { Cliente, Produto, Cotacao, AgendaItem } from '@/types';
-import { formatDate, formatTime } from '@/utils/formatters';
-
-import { useClientes, useProdutos, useCotacoes, useAgenda } from '@/hooks/useQueries';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Users, DollarSign, Plane, FileText, CheckCircle2 } from 'lucide-react';
+import { useClientes, useCotacoes, useAgenda } from '@/hooks/useQueries';
+import { formatCurrency } from '@/utils/formatters';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
+} from 'recharts';
+import { format, subMonths, isSameMonth } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface DashboardTabProps {
   onNavigate: (tab: string) => void;
@@ -15,352 +26,310 @@ interface DashboardTabProps {
 export const DashboardTab: React.FC<DashboardTabProps> = ({ onNavigate }) => {
   const { data: clientesData } = useClientes(1, 1000);
   const clientes = clientesData?.data || [];
-  const { data: produtos = [] } = useProdutos();
+
   const { data: cotacoes = [] } = useCotacoes();
   const { data: agenda = [] } = useAgenda();
-  const today = useMemo(() => {
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
-    return date;
-  }, []);
 
   const stats = useMemo(() => {
-    const todayEvents = agenda.filter(item => {
-      const eventDate = new Date(item.data);
-      return eventDate.toDateString() === today.toDateString();
-    });
+    const activeClientes = clientes.filter(c => c.status === 'Ativo').length;
 
-    const upcomingEvents = agenda.filter(item => {
-      const eventDate = new Date(item.data);
-      return eventDate >= today && item.status !== 'Cancelado' && item.status !== 'Concluído';
-    }).length;
+    // Calculate total sales (Finalized quotes)
+    const finalizedQuotes = cotacoes.filter(c => c.status === 'Finalizada' || c.status === 'Aprovada');
+    const totalSales = finalizedQuotes.reduce((acc, curr) => acc + (curr.valorTotal || 0), 0);
 
-    const activeCotacoes = cotacoes.filter(c => c.status === 'Pendente' || c.status === 'Em Análise').length;
-    const confirmedCotacoes = cotacoes.filter(c => c.status === 'Aprovada').length;
+    // Calculate pending value
+    const pendingQuotes = cotacoes.filter(c => c.status === 'Pendente' || c.status === 'Em Análise');
+    const potentialValue = pendingQuotes.reduce((acc, curr) => acc + (curr.valorTotal || 0), 0);
+
+    // Calculate conversion rate
+    const totalQuotes = cotacoes.length;
+    const conversionRate = totalQuotes > 0 ? (finalizedQuotes.length / totalQuotes) * 100 : 0;
+
+    // Calculate total commission
+    const totalComissao = finalizedQuotes.reduce((acc, curr) => acc + (curr.comissao || 0), 0);
 
     return {
-      totalClientes: clientes.length,
-      activeClientes: clientes.filter(c => c.status === 'Ativo').length,
-      totalProdutos: produtos.length,
-      totalCotacoes: cotacoes.length,
-      activeCotacoes,
-      confirmedCotacoes,
-      todayEvents: todayEvents.length,
-      upcomingEvents,
-      todayEventsList: todayEvents.slice(0, 3)
+      totalClientes: clientesData?.count || 0,
+      activeClientes,
+      totalSales,
+      potentialValue,
+      conversionRate,
+      pendingQuotesCount: pendingQuotes.length,
+      activeTrips: agenda.filter(a => a.status === 'Confirmado').length,
+      totalComissao
     };
-  }, [clientes, produtos, cotacoes, agenda, today]);
+  }, [clientes, cotacoes, agenda, clientesData]);
 
-  const recentClientes = useMemo(() => {
-    return [...clientes]
-      .sort((a, b) => new Date(b.dataCriacao).getTime() - new Date(a.dataCriacao).getTime())
-      .slice(0, 5);
-  }, [clientes]);
+  // Data for Bar Chart (Last 6 months sales)
+  const salesData = useMemo(() => {
+    const data = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = subMonths(new Date(), i);
+      const monthName = format(date, 'MMM', { locale: ptBR });
 
-  const pendingCotacoes = useMemo(() => {
-    return cotacoes
-      .filter(c => c.status === 'Pendente' || c.status === 'Em Análise')
-      .slice(0, 5);
+      const monthSales = cotacoes
+        .filter(c => (c.status === 'Finalizada' || c.status === 'Aprovada') && isSameMonth(new Date(c.dataCriacao), date))
+        .reduce((acc, curr) => acc + (curr.valorTotal || 0), 0);
+
+      const monthQuotes = cotacoes
+        .filter(c => isSameMonth(new Date(c.dataCriacao), date))
+        .length;
+
+      data.push({
+        name: monthName,
+        vendas: monthSales,
+        cotacoes: monthQuotes
+      });
+    }
+    return data;
   }, [cotacoes]);
 
+  // Data for Pie Chart (Quotes Status)
+  const statusData = useMemo(() => {
+    const statusCounts = cotacoes.reduce((acc, curr) => {
+      acc[curr.status] = (acc[curr.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
+  }, [cotacoes]);
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
+  // Upcoming Check-ins
+  const upcomingCheckins = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return agenda
+      .filter(item => {
+        const isCheckin = item.titulo.toLowerCase().includes('check-in') || item.titulo.toLowerCase().includes('checkin');
+        const eventDate = new Date(item.data);
+        return isCheckin && eventDate >= today && item.status !== 'Cancelado';
+      })
+      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
+      .slice(0, 5);
+  }, [agenda]);
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 mt-1">Visão geral do seu sistema CRM</p>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h2>
+        <div className="text-sm text-muted-foreground">
+          Visão geral do seu negócio
+        </div>
       </div>
 
-      {/* Alertas Importantes */}
-      {stats.todayEvents > 0 && (
-        <Card className="border-amber-500 bg-amber-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-amber-900">
-              <AlertCircle className="h-5 w-5" />
-              Atenção: {stats.todayEvents} evento(s) hoje!
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {stats.todayEventsList.map(event => (
-                <div key={event.id} className="flex items-center justify-between bg-white p-3 rounded border">
-                  <div>
-                    <div className="font-medium">{event.titulo}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {formatTime(event.hora)} - {event.cliente}
-                    </div>
-                  </div>
-                  <Badge className="bg-blue-100 text-blue-800">
-                    {event.status}
-                  </Badge>
-                </div>
-              ))}
-              {stats.todayEvents > 3 && (
-                <Button
-                  variant="link"
-                  onClick={() => onNavigate('agenda')}
-                  className="w-full text-amber-700 hover:text-amber-800"
-                >
-                  Ver todos os {stats.todayEvents} eventos de hoje →
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Cards de Estatísticas Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigate('clientes')}>
+      {/* KPI Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-blue-500" onClick={() => onNavigate('clientes')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Clientes</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Clientes Totais</CardTitle>
             <Users className="h-5 w-5 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{clientesData?.count || 0}</div>
-            <p className="text-xs text-green-600 mt-1">
+            <div className="text-3xl font-bold text-gray-900">{stats.totalClientes}</div>
+            <p className="text-xs text-green-600 mt-1 flex items-center">
+              <CheckCircle2 className="h-3 w-3 mr-1" />
               {stats.activeClientes} ativos
             </p>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigate('agenda')}>
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-green-500" onClick={() => onNavigate('cotacoes')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Próximos Eventos</CardTitle>
-            <Calendar className="h-5 w-5 text-purple-600" />
+            <CardTitle className="text-sm font-medium text-gray-600">Vendas (Total)</CardTitle>
+            <DollarSign className="h-5 w-5 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{stats.upcomingEvents}</div>
-            <p className="text-xs text-amber-600 mt-1">
-              {stats.todayEvents} hoje
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigate('cotacoes')}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Cotações</CardTitle>
-            <FileText className="h-5 w-5 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{stats.totalCotacoes}</div>
-            <p className="text-xs text-orange-600 mt-1">
-              {stats.activeCotacoes} pendentes
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigate('produtos')}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Produtos</CardTitle>
-            <Package className="h-5 w-5 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{stats.totalProdutos}</div>
+            <div className="text-3xl font-bold text-gray-900">{formatCurrency(stats.totalSales)}</div>
             <p className="text-xs text-gray-500 mt-1">
-              Catálogo disponível
+              {stats.conversionRate.toFixed(1)}% de conversão
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-amber-500" onClick={() => onNavigate('cotacoes')}>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Em Negociação</CardTitle>
+            <FileText className="h-5 w-5 text-amber-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-900">{formatCurrency(stats.potentialValue)}</div>
+            <p className="text-xs text-amber-600 mt-1">
+              {stats.pendingQuotesCount} cotações abertas
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-purple-500" onClick={() => onNavigate('agenda')}>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Viagens Ativas</CardTitle>
+            <Plane className="h-5 w-5 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-900">{stats.activeTrips}</div>
+            <p className="text-xs text-purple-600 mt-1">
+              Confirmadas na agenda
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-indigo-500">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Comissões (Receita)</CardTitle>
+            <DollarSign className="h-5 w-5 text-indigo-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-900">{formatCurrency(stats.totalComissao)}</div>
+            <p className="text-xs text-indigo-600 mt-1">
+              Total recebido em comissões
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Seção de Ações Rápidas */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Ações Rápidas
-          </CardTitle>
-          <CardDescription>Acesso rápido às funcionalidades mais usadas</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-center gap-2"
-              onClick={() => onNavigate('clientes')}
-            >
-              <Users className="h-6 w-6" />
-              <span className="text-sm">Novo Cliente</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-center gap-2"
-              onClick={() => onNavigate('agenda')}
-            >
-              <Calendar className="h-6 w-6" />
-              <span className="text-sm">Agendar Evento</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-center gap-2"
-              onClick={() => onNavigate('cotacoes')}
-            >
-              <FileText className="h-6 w-6" />
-              <span className="text-sm">Nova Cotação</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-center gap-2"
-              onClick={() => onNavigate('relatorios')}
-            >
-              <TrendingUp className="h-6 w-6" />
-              <span className="text-sm">Relatórios</span>
-            </Button>
-
-            {/* Botão de Teste (Apenas para desenvolvimento/demo) */}
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-center gap-2 border-dashed border-amber-400 bg-amber-50 hover:bg-amber-100"
-              onClick={() => {
-                if (confirm('Isso irá criar dados fictícios no banco de dados. Deseja continuar?')) {
-                  import('@/utils/seedData').then(m => m.seedTestData());
-                }
-              }}
-            >
-              <Package className="h-6 w-6 text-amber-600" />
-              <span className="text-sm text-amber-700">Gerar Testes</span>
-            </Button>
-
-            {/* Botão de Limpeza (PERIGO) */}
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-center gap-2 border-dashed border-red-400 bg-red-50 hover:bg-red-100"
-              onClick={() => {
-                const password = prompt('Digite a senha de administrador para APAGAR TUDO:');
-                if (password === 'admin123') {
-                  if (confirm('TEM CERTEZA? Isso apagará TODOS os clientes, vendas e produtos. Não há volta.')) {
-                    import('@/utils/clearData').then(m => m.clearDatabase());
-                  }
-                } else if (password !== null) {
-                  alert('Senha incorreta.');
-                }
-              }}
-            >
-              <Trash2 className="h-6 w-6 text-red-600" />
-              <span className="text-sm text-red-700">Resetar Banco</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Clientes Recentes */}
-        <Card>
+      {/* Charts Section */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Clientes Recentes
-            </CardTitle>
-            <CardDescription>Últimos 5 clientes cadastrados</CardDescription>
+            <CardTitle>Evolução de Vendas (6 Meses)</CardTitle>
           </CardHeader>
-          <CardContent>
-            {recentClientes.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhum cliente cadastrado ainda
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {recentClientes.map(cliente => (
-                  <div key={cliente.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex-1">
-                      <div className="font-medium">{cliente.nome}</div>
-                      <div className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Clock className="h-3 w-3" />
-                        {formatDate(cliente.dataCriacao)}
-                      </div>
-                    </div>
-                    <Badge variant={cliente.status === 'Ativo' ? 'default' : 'secondary'}>
-                      {cliente.status}
-                    </Badge>
-                  </div>
-                ))}
-                <Button
-                  variant="link"
-                  onClick={() => onNavigate('clientes')}
-                  className="w-full"
-                >
-                  Ver todos os clientes →
-                </Button>
-              </div>
-            )}
+          <CardContent className="pl-2">
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={salesData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `R$${value}`} />
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                    cursor={{ fill: 'transparent' }}
+                  />
+                  <Bar dataKey="vendas" fill="#22c55e" radius={[4, 4, 0, 0]} name="Vendas (R$)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Cotações Pendentes */}
-        <Card>
+        <Card className="col-span-3">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Cotações Pendentes
-            </CardTitle>
-            <CardDescription>Cotações que precisam de atenção</CardDescription>
+            <CardTitle>Status das Cotações</CardTitle>
           </CardHeader>
           <CardContent>
-            {pendingCotacoes.length === 0 ? (
-              <div className="text-center py-8">
-                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  Todas as cotações estão em dia!
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {pendingCotacoes.map(cotacao => (
-                  <div key={cotacao.id} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
-                    <div className="flex-1">
-                      <div className="font-medium">Cliente ID: {cotacao.clienteId.substring(0, 8)}...</div>
-                      <div className="text-sm text-muted-foreground">
-                        R$ {cotacao.valorTotal?.toFixed(2) || '0.00'}
-                      </div>
-                    </div>
-                    <Badge className="bg-orange-100 text-orange-800">
-                      {cotacao.status}
-                    </Badge>
-                  </div>
-                ))}
-                <Button
-                  variant="link"
-                  onClick={() => onNavigate('cotacoes')}
-                  className="w-full text-orange-700 hover:text-orange-800"
-                >
-                  Ver todas as cotações →
-                </Button>
-              </div>
-            )}
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={statusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Dicas e Suporte */}
-      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-900">
-            <Plane className="h-5 w-5" />
-            Dicas para Melhor Uso do Sistema
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2 text-sm text-gray-700">
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <span>Mantenha os dados dos clientes sempre atualizados para facilitar o contato</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <span>Use a aba de Agenda para acompanhar check-ins e embarques com antecedência</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <span>Gere relatórios regularmente para análise de desempenho</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <span>Cadastre fornecedores e produtos para agilizar a criação de cotações</span>
-            </li>
-          </ul>
-        </CardContent>
-      </Card>
+      {/* Bottom Section: Check-ins and Commission Details */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-purple-600" />
+              Próximos Check-ins
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {upcomingCheckins.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhum check-in próximo.</p>
+              ) : (
+                upcomingCheckins.map(item => (
+                  <div key={item.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                    <div className="flex items-start gap-4">
+                      <div className="bg-purple-100 p-2 rounded-full">
+                        <Plane className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{item.titulo}</p>
+                        <p className="text-xs text-muted-foreground">{item.cliente}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">{format(new Date(item.data), 'dd/MM')}</p>
+                      <p className="text-xs text-muted-foreground">{item.hora}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Commission Details Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-indigo-600" />
+              Detalhamento de Comissões
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {cotacoes.filter(c => c.status === 'Finalizada' || c.status === 'Aprovada').length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma venda com comissão registrada.</p>
+              ) : (
+                <div className="relative overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2">Data</th>
+                        <th className="px-4 py-2">Cliente</th>
+                        <th className="px-4 py-2">Venda</th>
+                        <th className="px-4 py-2">Comissão</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cotacoes
+                        .filter(c => c.status === 'Finalizada' || c.status === 'Aprovada')
+                        .sort((a, b) => new Date(b.dataCriacao).getTime() - new Date(a.dataCriacao).getTime())
+                        .slice(0, 5)
+                        .map(quote => {
+                          const cliente = clientes.find(c => c.id === quote.clienteId);
+                          return (
+                            <tr key={quote.id} className="bg-white border-b hover:bg-gray-50">
+                              <td className="px-4 py-2">{format(new Date(quote.dataCriacao), 'dd/MM/yyyy')}</td>
+                              <td className="px-4 py-2 font-medium text-gray-900">{cliente?.nome || 'Cliente não encontrado'}</td>
+                              <td className="px-4 py-2">{formatCurrency(quote.valorTotal)}</td>
+                              <td className="px-4 py-2 text-indigo-600 font-bold">
+                                {formatCurrency(quote.comissao || 0)}
+                                <span className="text-xs text-gray-500 ml-1">({quote.percentualComissao}%)</span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -70,6 +70,8 @@ export interface Cotacao {
   cliente?: string;
   dataVencimento?: string;
   itens?: Record<string, unknown>[];
+  comissao?: number;
+  percentualComissao?: number;
   dataCriacao: string;
 }
 

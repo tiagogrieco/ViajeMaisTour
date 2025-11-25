@@ -12,8 +12,9 @@ import { Trash2, Edit, Plus, Search, Calendar, MapPin, User, Clock, Loader2, Pla
 import { AgendaItem } from '@/types';
 import { FormattedInput } from './FormattedInput';
 import { formatDate, formatTime } from '@/utils/formatters';
-import { supabaseService } from '@/services/supabaseService';
 import { toast } from 'sonner';
+import { CalendarView } from './CalendarView';
+import { format } from 'date-fns';
 
 import { useAgenda, useAgendaMutations } from '@/hooks/useQueries';
 
@@ -25,7 +26,9 @@ export const AgendaTab: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AgendaItem | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeView, setActiveView] = useState<'list' | 'calendar' | 'upcoming'>('upcoming');
+  const [activeView, setActiveView] = useState<'list' | 'calendar' | 'upcoming'>('calendar');
+  const [currentDate, setCurrentDate] = useState(new Date());
+
   const [formData, setFormData] = useState<Omit<AgendaItem, 'id' | 'dataCriacao'>>({
     titulo: '',
     descricao: '',
@@ -67,18 +70,9 @@ export const AgendaTab: React.FC = () => {
 
   const todayEvents = useMemo(() => {
     return filteredAgenda.filter(item => {
-      const eventDate = new Date(item.data);
-      return eventDate.toDateString() === today.toDateString();
+      // Fix timezone offset for accurate comparison if needed, but string comparison is safer for YYYY-MM-DD
+      return item.data === format(today, 'yyyy-MM-dd');
     });
-  }, [filteredAgenda, today]);
-
-  const thisWeekEvents = useMemo(() => {
-    const weekEnd = new Date(today);
-    weekEnd.setDate(weekEnd.getDate() + 7);
-    return filteredAgenda.filter(item => {
-      const eventDate = new Date(item.data);
-      return eventDate >= today && eventDate <= weekEnd;
-    }).sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
   }, [filteredAgenda, today]);
 
   const resetForm = () => {
@@ -137,6 +131,19 @@ export const AgendaTab: React.FC = () => {
         // Error handling in mutation
       }
     }
+  };
+
+  const handleQuickAction = (type: 'checkin' | 'viagem') => {
+    resetForm();
+    const titlePrefix = type === 'checkin' ? 'Check-in: ' : 'Viagem: ';
+    setFormData(prev => ({ ...prev, titulo: titlePrefix }));
+    setIsDialogOpen(true);
+  };
+
+  const handleDayClick = (date: Date) => {
+    resetForm();
+    setFormData(prev => ({ ...prev, data: format(date, 'yyyy-MM-dd') }));
+    setIsDialogOpen(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -244,145 +251,158 @@ export const AgendaTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header com filtros */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex flex-col sm:flex-row gap-4 flex-1">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Buscar por título, cliente ou local..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+      {/* Header com filtros e Ações Rápidas */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Buscar por título, cliente ou local..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Status</SelectItem>
+                <SelectItem value="Agendado">Agendado</SelectItem>
+                <SelectItem value="Confirmado">Confirmado</SelectItem>
+                <SelectItem value="Cancelado">Cancelado</SelectItem>
+                <SelectItem value="Concluído">Concluído</SelectItem>
+                <SelectItem value="Reagendado">Reagendado</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar por status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os Status</SelectItem>
-              <SelectItem value="Agendado">Agendado</SelectItem>
-              <SelectItem value="Confirmado">Confirmado</SelectItem>
-              <SelectItem value="Cancelado">Cancelado</SelectItem>
-              <SelectItem value="Concluído">Concluído</SelectItem>
-              <SelectItem value="Reagendado">Reagendado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Agendamento
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={() => handleQuickAction('checkin')} className="flex-1 sm:flex-none">
+              <CheckCircle2 className="h-4 w-4 mr-2 text-purple-600" />
+              Check-in
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingItem ? 'Editar Agendamento' : 'Novo Agendamento'}
-              </DialogTitle>
-            </DialogHeader>
+            <Button variant="outline" onClick={() => handleQuickAction('viagem')} className="flex-1 sm:flex-none">
+              <Plane className="h-4 w-4 mr-2 text-green-600" />
+              Viagem
+            </Button>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <FormattedInput
-                    label="Título"
-                    type="text"
-                    value={formData.titulo}
-                    onChange={(value) => setFormData(prev => ({ ...prev, titulo: value }))}
-                    placeholder="Ex: Check-in Viagem Paris, Embarque Grupo..."
-                    required
-                  />
-                </div>
-
-                <FormattedInput
-                  label="Data"
-                  type="date"
-                  value={formData.data}
-                  onChange={(value) => setFormData(prev => ({ ...prev, data: value }))}
-                  required
-                />
-
-                <FormattedInput
-                  label="Hora"
-                  type="time"
-                  value={formData.hora}
-                  onChange={(value) => setFormData(prev => ({ ...prev, hora: value }))}
-                  required
-                />
-
-                <FormattedInput
-                  label="Cliente"
-                  type="text"
-                  value={formData.cliente}
-                  onChange={(value) => setFormData(prev => ({ ...prev, cliente: value }))}
-                  placeholder="Nome do cliente"
-                  required
-                />
-
-                <FormattedInput
-                  label="Local"
-                  type="text"
-                  value={formData.local || ''}
-                  onChange={(value) => setFormData(prev => ({ ...prev, local: value }))}
-                  placeholder="Aeroporto, Hotel, Ponto de Encontro..."
-                />
-
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(value: 'Agendado' | 'Confirmado' | 'Cancelado' | 'Concluído' | 'Reagendado') => setFormData(prev => ({ ...prev, status: value }))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Agendado">Agendado</SelectItem>
-                      <SelectItem value="Confirmado">Confirmado</SelectItem>
-                      <SelectItem value="Cancelado">Cancelado</SelectItem>
-                      <SelectItem value="Concluído">Concluído</SelectItem>
-                      <SelectItem value="Reagendado">Reagendado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="md:col-span-2 space-y-2">
-                  <Label htmlFor="descricao">Descrição</Label>
-                  <Textarea
-                    id="descricao"
-                    value={formData.descricao}
-                    onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
-                    placeholder="Detalhes da viagem, documentos necessários, horários..."
-                    rows={3}
-                    required
-                  />
-                </div>
-
-                <div className="md:col-span-2 space-y-2">
-                  <Label htmlFor="observacoes">Observações Importantes</Label>
-                  <Textarea
-                    id="observacoes"
-                    value={formData.observacoes || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
-                    placeholder="Restrições, alertas, lembretes..."
-                    rows={2}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isLoading}>
-                  Cancelar
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={resetForm} className="flex-1 sm:flex-none">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo
                 </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {editingItem ? 'Atualizar' : 'Agendar'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingItem ? 'Editar Agendamento' : 'Novo Agendamento'}
+                  </DialogTitle>
+                </DialogHeader>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <FormattedInput
+                        label="Título"
+                        type="text"
+                        value={formData.titulo}
+                        onChange={(value) => setFormData(prev => ({ ...prev, titulo: value }))}
+                        placeholder="Ex: Check-in Viagem Paris, Embarque Grupo..."
+                        required
+                      />
+                    </div>
+
+                    <FormattedInput
+                      label="Data"
+                      type="date"
+                      value={formData.data}
+                      onChange={(value) => setFormData(prev => ({ ...prev, data: value }))}
+                      required
+                    />
+
+                    <FormattedInput
+                      label="Hora"
+                      type="time"
+                      value={formData.hora}
+                      onChange={(value) => setFormData(prev => ({ ...prev, hora: value }))}
+                      required
+                    />
+
+                    <FormattedInput
+                      label="Cliente"
+                      type="text"
+                      value={formData.cliente}
+                      onChange={(value) => setFormData(prev => ({ ...prev, cliente: value }))}
+                      placeholder="Nome do cliente"
+                      required
+                    />
+
+                    <FormattedInput
+                      label="Local"
+                      type="text"
+                      value={formData.local || ''}
+                      onChange={(value) => setFormData(prev => ({ ...prev, local: value }))}
+                      placeholder="Aeroporto, Hotel, Ponto de Encontro..."
+                    />
+
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select value={formData.status} onValueChange={(value: 'Agendado' | 'Confirmado' | 'Cancelado' | 'Concluído' | 'Reagendado') => setFormData(prev => ({ ...prev, status: value }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Agendado">Agendado</SelectItem>
+                          <SelectItem value="Confirmado">Confirmado</SelectItem>
+                          <SelectItem value="Cancelado">Cancelado</SelectItem>
+                          <SelectItem value="Concluído">Concluído</SelectItem>
+                          <SelectItem value="Reagendado">Reagendado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="md:col-span-2 space-y-2">
+                      <Label htmlFor="descricao">Descrição</Label>
+                      <Textarea
+                        id="descricao"
+                        value={formData.descricao}
+                        onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
+                        placeholder="Detalhes da viagem, documentos necessários, horários..."
+                        rows={3}
+                        required
+                      />
+                    </div>
+
+                    <div className="md:col-span-2 space-y-2">
+                      <Label htmlFor="observacoes">Observações Importantes</Label>
+                      <Textarea
+                        id="observacoes"
+                        value={formData.observacoes || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+                        placeholder="Restrições, alertas, lembretes..."
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isLoading}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {editingItem ? 'Atualizar' : 'Agendar'}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
       </div>
 
       {/* Alertas de Hoje */}
@@ -415,10 +435,20 @@ export const AgendaTab: React.FC = () => {
       {/* Tabs de Visualização */}
       <Tabs value={activeView} onValueChange={(v) => setActiveView(v as 'list' | 'calendar' | 'upcoming')} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="calendar">Calendário Mensal</TabsTrigger>
           <TabsTrigger value="upcoming">Próximos Eventos</TabsTrigger>
-          <TabsTrigger value="calendar">Esta Semana</TabsTrigger>
-          <TabsTrigger value="list">Todos</TabsTrigger>
+          <TabsTrigger value="list">Lista Completa</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="calendar" className="mt-6">
+          <CalendarView
+            events={filteredAgenda}
+            currentDate={currentDate}
+            onDateChange={setCurrentDate}
+            onEventClick={handleEdit}
+            onDayClick={handleDayClick}
+          />
+        </TabsContent>
 
         <TabsContent value="upcoming" className="space-y-4 mt-6">
           {upcomingEvents.length === 0 ? (
@@ -429,18 +459,6 @@ export const AgendaTab: React.FC = () => {
             </Card>
           ) : (
             upcomingEvents.map((item) => renderEventCard(item, true))
-          )}
-        </TabsContent>
-
-        <TabsContent value="calendar" className="space-y-4 mt-6">
-          {thisWeekEvents.length === 0 ? (
-            <Card>
-              <CardContent className="flex items-center justify-center py-8">
-                <p className="text-muted-foreground">Nenhum evento esta semana.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            thisWeekEvents.map((item) => renderEventCard(item, true))
           )}
         </TabsContent>
 

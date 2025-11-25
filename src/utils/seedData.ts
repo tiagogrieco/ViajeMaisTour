@@ -29,7 +29,7 @@ const generateCPF = () => {
 
 const generateCNPJ = () => {
     const n = () => getRandomInt(0, 9);
-    return `${n()}${n()}.${n()}${n()}${n()}.${n()}${n()}${n()}/0001-${n()}${n()}`;
+    return `${n()}${n()}.${n()}${n()}.${n()}${n()}.${n()}${n()}${n()}/0001-${n()}${n()}`;
 };
 
 const generatePhone = () => {
@@ -109,14 +109,20 @@ export const seedTestData = async () => {
 
         // 5. Criar Cotação
         const dataViagem = generateDate(2025, 2026);
+        const valorTotal = produto.preco * getRandomInt(1, 4);
+        const percentual = getRandomInt(5, 15);
+        const comissao = (valorTotal * percentual) / 100;
+
         await supabaseService.cotacoes.create({
             clienteId: cliente.id,
             dataViagem: dataViagem,
-            dataRetorno: dataViagem, // Simplificação
+            dataRetorno: dataViagem,
             numeroPassageiros: getRandomInt(1, 5),
-            valorTotal: produto.preco * getRandomInt(1, 4),
+            valorTotal: valorTotal,
             status: getRandomItem(['Pendente', 'Em Análise', 'Aprovada', 'Rejeitada']),
-            observacoes: `Interesse em ${destino}`
+            observacoes: `Interesse em ${destino}`,
+            percentualComissao: percentual,
+            comissao: comissao
         });
 
         // 6. Criar Item na Agenda (para hoje ou futuro próximo)
@@ -140,9 +146,9 @@ export const seedTestData = async () => {
             window.location.reload();
         }, 1500);
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Erro ao gerar dados:', error);
         toast.dismiss();
-        toast.error('Erro ao gerar dados. Verifique o console.');
+        toast.error(`Erro ao gerar dados: ${error.message || 'Verifique o console'}`);
     }
 };
