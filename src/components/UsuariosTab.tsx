@@ -23,6 +23,7 @@ export default function UsuariosTab() {
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
+    username: '',
     senha: '',
     tipo: 'Usuario' as 'Admin' | 'Usuario',
     telefone: '',
@@ -42,6 +43,7 @@ export default function UsuariosTab() {
         (user) =>
           user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (user.username && user.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (user.cargo && user.cargo.toLowerCase().includes(searchTerm.toLowerCase()))
       );
       setFilteredUsuarios(filtered);
@@ -74,6 +76,7 @@ export default function UsuariosTab() {
         const updates: any = {
           nome: formData.nome,
           email: formData.email,
+          username: formData.username,
           tipo: formData.tipo,
           telefone: formData.telefone,
           cargo: formData.cargo,
@@ -115,6 +118,7 @@ export default function UsuariosTab() {
     setFormData({
       nome: user.nome,
       email: user.email,
+      username: user.username || '',
       senha: '',
       tipo: user.tipo,
       telefone: user.telefone || '',
@@ -141,6 +145,7 @@ export default function UsuariosTab() {
     setFormData({
       nome: '',
       email: '',
+      username: '',
       senha: '',
       tipo: 'Usuario',
       telefone: '',
@@ -234,6 +239,16 @@ export default function UsuariosTab() {
                       value={formData.nome}
                       onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                       placeholder="Nome completo"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Usuário (Login)</Label>
+                    <Input
+                      id="username"
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      placeholder="usuario.sistema"
                     />
                   </div>
 
@@ -427,6 +442,13 @@ export default function UsuariosTab() {
                     <Mail className="w-4 h-4" />
                     <span className="truncate">{user.email}</span>
                   </div>
+
+                  {user.username && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <UserIcon className="w-4 h-4" />
+                      <span className="truncate">{user.username}</span>
+                    </div>
+                  )}
 
                   {user.telefone && (
                     <div className="flex items-center gap-2 text-muted-foreground">

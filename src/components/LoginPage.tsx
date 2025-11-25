@@ -66,11 +66,11 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email ou Usuário</Label>
               <Input
                 id="email"
-                type="email"
-                placeholder="seu@email.com"
+                type="text"
+                placeholder="seu@email.com ou usuario"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}

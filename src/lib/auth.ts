@@ -5,6 +5,7 @@ export interface User {
   id: string;
   nome: string;
   email: string;
+  username?: string;
   tipo: 'Admin' | 'Usuario';
   telefone?: string;
   cargo?: string;
@@ -21,16 +22,34 @@ export interface AuthState {
 }
 
 
-export async function login(email: string, senha: string): Promise<{ success: boolean; user?: User; error?: string }> {
+export async function login(identifier: string, senha: string): Promise<{ success: boolean; user?: User; error?: string }> {
   try {
+    let emailToLogin = identifier;
+
+    // Check if identifier is NOT an email (simple check)
+    if (!identifier.includes('@')) {
+      // Try to find email by username
+      const { data: userByUsername, error: usernameError } = await supabase
+        .from('app_a9fcb610b1_users')
+        .select('email')
+        .eq('username', identifier)
+        .single();
+
+      if (usernameError || !userByUsername) {
+        return { success: false, error: 'Usuário não encontrado.' };
+      }
+
+      emailToLogin = userByUsername.email;
+    }
+
     // 1. Authenticate with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
+      email: emailToLogin,
       password: senha,
     });
 
     if (authError) {
-      return { success: false, error: 'Email ou senha incorretos' };
+      return { success: false, error: 'Usuário ou senha incorretos' };
     }
 
     if (!authData.user) {
@@ -43,7 +62,7 @@ export async function login(email: string, senha: string): Promise<{ success: bo
     const { data: profileData, error: profileError } = await supabase
       .from('app_a9fcb610b1_users')
       .select('*')
-      .eq('email', email)
+      .eq('email', emailToLogin)
       .single();
 
     if (profileError || !profileData) {
@@ -56,6 +75,7 @@ export async function login(email: string, senha: string): Promise<{ success: bo
       id: profileData.id, // Keep using the profile ID for internal relations
       nome: profileData.nome,
       email: profileData.email,
+      username: profileData.username,
       tipo: profileData.tipo,
       telefone: profileData.telefone,
       cargo: profileData.cargo,
@@ -107,6 +127,7 @@ export function isAdmin(): boolean {
 export async function createUser(userData: {
   nome: string;
   email: string;
+  username?: string;
   senha: string;
   tipo: 'Admin' | 'Usuario';
   telefone?: string;
@@ -173,6 +194,7 @@ export async function createUser(userData: {
         id: authData.user.id, // Use the ID from the newly created auth user
         nome: userData.nome,
         email: userData.email,
+        username: userData.username,
         senha_hash: 'managed_by_supabase_auth', // Dummy value to satisfy DB constraint
         tipo: userData.tipo,
         telefone: userData.telefone,
@@ -211,6 +233,7 @@ export async function listUsers(): Promise<User[]> {
       id: user.id,
       nome: user.nome,
       email: user.email,
+      username: user.username,
       tipo: user.tipo,
       telefone: user.telefone,
       cargo: user.cargo,
@@ -231,6 +254,7 @@ export async function updateUser(
   updates: Partial<{
     nome: string;
     email: string;
+    username: string;
     senha: string;
     tipo: 'Admin' | 'Usuario';
     telefone: string;
@@ -246,10 +270,19 @@ export async function updateUser(
 
     const updateData: any = { ...updates };
 
-    // Password updates should be handled via Supabase Auth password reset
+    // Password updates handled via secure RPC
     if (updates.senha) {
+      const { error: rpcError } = await supabase.rpc('update_user_password', {
+        user_id: userId,
+        new_password: updates.senha
+      });
+
+      if (rpcError) {
+        console.error('Erro ao atualizar senha via RPC:', rpcError);
+        return { success: false, error: 'Erro ao atualizar senha: ' + rpcError.message };
+      }
+
       delete updateData.senha;
-      // TODO: Trigger password reset email or use Admin API
     }
 
     const { error } = await supabase

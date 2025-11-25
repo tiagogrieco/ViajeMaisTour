@@ -114,7 +114,7 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout }) => {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{currentUser?.nome}</p>
               <p className="text-xs text-muted-foreground">
-                {currentUser?.tipo === 'Admin' ? 'Administrador' : 'Usuário'}
+                {currentUser?.username ? `@${currentUser.username}` : (currentUser?.tipo === 'Admin' ? 'Administrador' : 'Usuário')}
               </p>
             </div>
           </div>
